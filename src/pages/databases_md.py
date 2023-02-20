@@ -1,17 +1,18 @@
-da_display_table_md = "<center>\n<|{ch_results.round()}|table|columns={list(chart.columns)}|width=fit-content|height={height_table}|></center>\n"
+da_display_table_md = "<|{ch_results.round()}|table|columns={list(chart.columns)}|height={height_table}|width=100%|>"
 d_chart_csv_path = None
 
 def da_create_display_table_md(str_to_select_chart):
-    return "<center>\n<|{" + str_to_select_chart + \
-        "}|table|width=fit-content|height={height_table}|></center>\n"
+    return "<|{" + str_to_select_chart + \
+        "}|table|width=fit-content|height={height_table}|width=100%|>"
 
 
 da_databases_md = """
-# Datasources
+<|part|class_name=container|
+# Data**sources**{: .color_primary } 
 
-<|layout|columns=3 2 1|columns[mobile]=1|
+<|layout|columns=3 2 1|columns[mobile]=1|class_name=align_columns_bottom|
 <layout_scenario|
-<|layout|columns=1 1 3|columns[mobile]=1|
+<|layout|columns=1 1 3|columns[mobile]=1|class_name=align_columns_bottom|
 <year|
 Year
 
@@ -33,18 +34,18 @@ Scenario
 |layout_scenario>
 
 <|
-**Table** \n \n <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
+Table
+
+<|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 |>
 
-<br/>
-<br/>
 <|{d_chart_csv_path}|file_download|name=table.csv|label=Download table|>
 |>
 
-<|part|render={len(scenario_selector)>0}|partial={partial_table}|>
+<|part|render={len(scenario_selector)>0}|partial={partial_table}|class_name=mt2|>
 
 <|part|render=False|
 <|{scenario_counter}|>
 |>
-
+|>
 """

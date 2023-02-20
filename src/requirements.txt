@@ -1,0 +1,4 @@
+taipy
+scikit-learn==1.0
+statsmodels==0.13.2
+PuLP==2.6.0

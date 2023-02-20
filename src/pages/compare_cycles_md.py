@@ -95,19 +95,15 @@ def update_cc_data(state):
 
 
 cc_compare_cycles_md = """
-# Compare cycles
+<|part|class_name=container|
+# **Compare**{: .color_primary} cycles
 
-
-<center>
-<|Compare Cycles|button|on_action={update_cc_data}|>
-</center>
+<|Start cycles comparison|button|on_action={update_cc_data}|class_name=mb2|>
 
 <|part|render={cc_show_comparison}|
 <|Table|expanded=False|expandable|
 
-<center>
-<|{cc_data}|table|width=fit-content|>
-</center>
+<|{cc_data}|table|width=100%|>
 
 |>
 
@@ -115,5 +111,5 @@ cc_compare_cycles_md = """
 
 <|{cc_data}|chart|type=bar|x=Cycle|y[1]=Cost of Back Order|y[2]=Cost of Stock|layout={cc_layout}|width=100%|height=600|>
 |>
-
+|>
 """

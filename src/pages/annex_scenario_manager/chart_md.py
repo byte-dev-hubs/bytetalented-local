@@ -4,8 +4,8 @@ import pandas as pd
 ch_layout_dict = {"margin":{"t":20}}
 
 # Toggle for setting charts
-ch_choice_chart = [("pie", Icon("images/pie.png", "pie")),
-                    ("chart", Icon("images/chart.png", "chart"))]
+ch_choice_chart = [("pie", Icon("images/icons/pie_chart.svg", "pie")),
+                    ("chart", Icon("images/icons/bar_chart.svg", "chart"))]
 ch_show_pie = ch_choice_chart[1][0]
 
 ch_results = pd.DataFrame({"Monthly Production FPA":[],
@@ -90,7 +90,7 @@ def create_charts_md(ch_results):
             columns = [c for c in columns if 'Total' not in c] # in the pie, we don't want to show the total
             
             if charts_option[charts_i] in pie_possible :
-                md +="\n<|{pie_results.loc[" + str(columns) + "]}|chart|type=pie|x=values|label=labels|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='pie' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
+                md +="\n<|{pie_results.loc[" + str(columns) + "]}|chart|type=pie|values=values|labels=labels|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='pie' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
                 md += "\n<|{ch_results}|chart|x=index|" + y_format + "|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='chart' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
             else:
                 md += "\n<|{ch_results}|chart|x=index|" + y_format + "|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
@@ -102,21 +102,16 @@ def create_charts_md(ch_results):
 
 
 ch_chart_md_1 = """
-<br/>
-<|layout|columns=1 1|columns[mobile]=1|
-<|
-<center>
+<|layout|columns=1 1|columns[mobile]=1|gap=1rem|
+    <|part|class_name=card mb1 p2 text_center|
 <|{str(int(sum_costs_of_BO/1000))+' K'}|indicator|value={sum_costs_of_BO}|min=50_000|max=1_000|width=93%|>
-Back Order Cost
-</center>
-|>
+**Back Order Cost**
+    |>
 
-<|
-<center>
+    <|part|class_name=card mb1 p2 text_center|
 <|{str(int(sum_costs_of_stock/1000))+' K'}|indicator|value={sum_costs_of_stock}|min=100_000|max=25_000|width=93%|>
-Stock Cost
-</center>
-|>
+**Stock Cost**
+    |>
 |>
 """
 
@@ -128,7 +123,7 @@ ch_chart_md = """
 |>
 
 <no_scenario|part|render={len(scenario_selector)==0}|
-## No scenario created for the current month
+#### No scenario created for the current month #### {: .mt0 .color_secondary }
 |no_scenario>
 |>
 """

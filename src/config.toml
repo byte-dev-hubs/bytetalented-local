@@ -1,0 +1,84 @@
+[TAIPY]
+
+[DATA_NODE.demand]
+storage_type = "csv"
+scope = "SCENARIO:SCOPE"
+path = "data/time_series_demand.csv"
+has_header = "True:bool"
+
+[DATA_NODE.fixed_variables]
+scope = "PIPELINE:SCOPE"
+
+[DATA_NODE.solver_name]
+scope = "SCENARIO:SCOPE"
+default_data = "Default"
+
+[DATA_NODE.model_created]
+scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
+
+[DATA_NODE.model_solved]
+scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
+
+[DATA_NODE.results]
+scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
+
+[TASK.create_model]
+inputs = [ "demand:SECTION", "fixed_variables:SECTION",]
+function = "algos.algos.create_model:function"
+outputs = [ "model_created:SECTION",]
+skippable = "True:bool"
+
+[TASK.solve_model]
+inputs = [ "model_created:SECTION", "solver_name:SECTION",]
+function = "algos.algos.solve_model:function"
+outputs = [ "model_solved:SECTION",]
+skippable = "True:bool"
+
+[TASK.create_results]
+inputs = [ "model_solved:SECTION", "fixed_variables:SECTION", "demand:SECTION",]
+function = "algos.algos.create_results:function"
+outputs = [ "results:SECTION",]
+skippable = "True:bool"
+
+[PIPELINE.pipeline]
+tasks = [ "create_model:SECTION", "solve_model:SECTION", "create_results:SECTION",]
+
+[SCENARIO.scenario]
+pipelines = [ "pipeline:SECTION",]
+frequency = "MONTHLY:FREQUENCY"
+
+[DATA_NODE.fixed_variables.default_data]
+Max_Capacity_FPA = "950:int"
+cost_FPA_Back_Order = "200:int"
+cost_FPA_Stock = "45:int"
+Initial_Back_Order_FPA = "0:int"
+Initial_Stock_FPA = "30:int"
+Initial_Production_FPA = "850:int"
+number_RPone_to_produce_FPA = "20:int"
+number_RPtwo_to_produce_FPA = "15:int"
+Max_Capacity_FPB = "950:int"
+cost_FPB_Back_Order = "250:int"
+cost_FPB_Stock = "40:int"
+Initial_Back_Order_FPB = "25:int"
+Initial_Stock_FPB = "0:int"
+Initial_Production_FPB = "800:int"
+number_RPone_to_produce_FPB = "50:int"
+number_RPtwo_to_produce_FPB = "45:int"
+Initial_Stock_RPone = "30:int"
+Max_Stock_RPone = "80:int"
+cost_RPone_Stock = "30:int"
+cost_RPone_Purchase = "100:int"
+Initial_Purchase_RPone = "35:int"
+Initial_Stock_RPtwo = "40:int"
+Max_Stock_RPtwo = "60:int"
+cost_RPtwo_Stock = "60:int"
+cost_RPtwo_Purchase = "150:int"
+Initial_Purchase_RPtwo = "40:int"
+Weight_of_Stock = "100:int"
+Weight_of_Back_Order = "100:int"
+Max_Capacity_of_FPA_and_FPB = "1710.0:float"
+
+[SCENARIO.scenario.comparators]

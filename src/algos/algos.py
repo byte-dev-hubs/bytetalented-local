@@ -257,7 +257,7 @@ def create_model(demand: pd.DataFrame, fixed_variables: dict):
     return model_info
 
 
-def solve_model(model_info: dict):
+def solve_model(model_info: dict, solver_name):
     """This function solves the model and returns all the solutions in a dictionary.
 
     Args:
@@ -271,9 +271,13 @@ def solve_model(model_info: dict):
 
     nb_periods = len(model_info["Monthly_Production_FPA"])
 
-    # solving the model
-    m_solved = prob.solve()
-
+    if solver_name != "Default":
+        solver = getSolver(solver_name)
+        # solving the model
+        m_solved = prob.solve(solver)
+    else:
+        m_solved = prob.solve()
+    
     # getting the solution in the right variables
     # for product A
     prod_sol_FPA = [

@@ -2,6 +2,7 @@ from .chart_md import ch_chart_md, ch_layout_dict, ch_results
 from config.config import fixed_variables_default
 from taipy.gui import Icon
 
+import pulp as pl
 
 def create_sliders(fixed_variables):
     """"
@@ -23,10 +24,9 @@ def create_sliders(fixed_variables):
         if p_type != 'Objective Weights':
             # the part will be shown if 'Objective Weights' is not selected
             slider_md +="""
-<center>
-<|{pa_product_param}|toggle|lov={pa_choice_product_param}|value_by_id|>
-</center>
-<br/>
+
+<|{pa_product_param}|toggle|lov={pa_choice_product_param}|value_by_id|class_name=mb1 text_center|>
+
 """
         if p_type == 'Objective Weights':
             var_p = [key  for key in fixed_variables.keys() if ('produce' not in key and 'Weight' in key)]
@@ -72,26 +72,28 @@ def create_sliders(fixed_variables):
 pa_sliders_md = create_sliders(fixed_variables_default)
 
 pa_parameters_md = """
-<|layout|columns=139 1 45|columns[mobile]=1|gap=1.5rem|
+<|layout|columns=9 3|columns[mobile]=1|gap=1.5rem
 """ + ch_chart_md + """ 
 
-<blank_space|
-|blank_space>
-
 <|
-<center>
-<|{pa_param_selected}|selector|lov={pa_param_selector}|>
-</center>
+
+<|{pa_param_selected}|selector|lov={pa_param_selector}|width=100%|class_name=mb1|>
 
 """ + pa_sliders_md + """
 
-<|Delete|button|on_action={delete_scenario_fct}|active={len(scenario_selector)>0}|id=delete_button|>
-<|Make Primary|button|on_action={make_primary}|active={len(scenario_selector)>0 and not selected_scenario_is_primary}|id=make_primary|>
-<|Re-optimize|button|on_action=submit_scenario|active={len(scenario_selector)>0}|id=re_optimize|>
-<|New scenario|button|on_action=create_new_scenario|id=new_scenario|>
+<|{solver_name}|selector|lov={list_of_solvers}|dropdown|>
+
+<|Delete|button|on_action={delete_scenario_fct}|active={len(scenario_selector)>0}|id=delete_button|class_name=fullwidth error mb_half|>
+<|Make Primary|button|on_action={make_primary}|active={len(scenario_selector)>0 and not selected_scenario_is_primary}|id=make_primary|class_name=fullwidth secondary mb_half|>
+<|Re-optimize|button|on_action=submit_scenario|active={len(scenario_selector)>0}|id=re_optimize|class_name=fullwidth secondary mb_half|>
+<|New scenario|button|on_action=create_new_scenario|id=new_scenario|class_name=fullwidth plain mb_half|>
 |>
 |>
 """
+
+solver_name = "Default"
+list_of_solvers = solver_list = ["Default"] + pl.listSolvers(onlyAvailable=True)
+
 
 pa_param_selector = ['Capacity Constraints','Objective Weights','Initial Parameters']
 pa_param_selected = pa_param_selector[0]

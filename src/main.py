@@ -1,6 +1,7 @@
 # basic packages of python to handle data
 from login.login import *
 import pandas as pd
+from assets.mui_theme import *
 
 # importation of Taipy core
 import taipy as tp
@@ -12,7 +13,7 @@ from taipy import Config
 
 
 # importation of useful functions for Taipy frontend
-from taipy.gui import Gui, Markdown, notify, Icon, invoke_long_callback
+from taipy.gui import Gui, Markdown, notify, Icon, invoke_long_callback, navigate
 
 # Frontend import of my python code | importation of the pages : compare_scenario_md page, scenario_manager_md page, databases_md page
 # the * is used because sometimes we need the functions and/or variables
@@ -34,6 +35,8 @@ PATH_TO_TABLE = str(tempdir / "table.csv")
 
 Config.configure_global_app(clean_entities_enabled=True)
 tp.clean_all_entities()
+
+tp.Core().run()
 
 cc_create_scenarios_for_cycle()
 
@@ -140,52 +143,40 @@ def validate_login(state, id, action, payload):
 # scenario_manager_md, compare_scenario_md, databases_md will be visible depending on the page variable.
 # this is the purpose of the 'render' parameter.
 menu_lov = [
-    ("Data Visualization",
+    ("Data-Visualization",
      Icon(
-         'images/chart_menu.svg',
+         'images/icons/visualize.svg',
          'Data Visualization')),
-    ("Scenario Manager",
+    ("Scenario-Manager",
      Icon(
-         'images/Scenario.svg',
+         'images/icons/scenario.svg',
          'Scenario Manager')),
-    ("Compare Scenarios",
+    ("Compare-Scenarios",
      Icon(
-         'images/compare.svg',
+         'images/icons/compare.svg',
          'Compare Scenarios')),
-    ("Compare Cycles",
+    ("Compare-Cycles",
      Icon(
-         'images/Cycle.svg',
+         'images/icons/cycle.svg',
          'Compare Cycles')),
     ('Databases',
      Icon(
-         'images/Datanode.svg',
+         'images/icons/data_base.svg',
          'Databases'))]
 
-main_md = login_md + """
+
+root_md = login_md + """
+<|toggle|theme|>
 
 <|menu|label=Menu|lov={menu_lov}|on_action=menu_fct|id=menu_id|>
-
-<|part|render={page == 'Data Visualization'}|
-""" + da_data_visualisation_md + """
-|>
-
-<|part|render={page == 'Scenario Manager'}|
-""" + sm_scenario_manager_md + """
-|>
-
-<|part|render={page == 'Compare Scenarios'}|
-""" + cs_compare_scenario_md + """
-|>
-
-<|part|render={page == 'Compare Cycles'}|
-""" + cc_compare_cycles_md + """
-|>
-
-<|part|render={page == 'Databases'}|
-""" + da_databases_md + """
-|>
-
 """
+pages = {"/":root_md,
+         "Data-Visualization":da_data_visualisation_md,
+         "Scenario-Manager":sm_scenario_manager_md,
+         "Compare-Scenarios":cs_compare_scenario_md,
+         "Compare-Cycles":cc_compare_cycles_md,
+         'Databases':da_databases_md
+         }
 
 
 ###############################################################################
@@ -203,7 +194,7 @@ def update_scenario_selector(state, scenarios: list):
     """
 
     state.scenario_selector = [(s.id, s.name) if not s.is_primary else (
-        s.id, Icon('images/main.svg', s.name)) for s in scenarios]
+        s.id, Icon('images/icons/flag.svg', s.name)) for s in scenarios]
     state.scenario_counter = len(state.scenario_selector)
     state.scenario_selector_two = state.scenario_selector.copy()
 
@@ -360,8 +351,11 @@ def submit_scenario(state):
     scenario = tp.get(state.selected_scenario)
 
     # setting the scenario with the right parameters
-    scenario.fixed_variables.write(state.fixed_variables._dict)
-
+    old_fixed_variables = scenario.fixed_variables.read()
+    if old_fixed_variables != state.fixed_variables._dict:
+        scenario.fixed_variables.write(state.fixed_variables._dict)
+    if state.solver_name != scenario.solver_name.read():
+        scenario.solver_name.write(state.solver_name)
     # running the scenario in a long callback and update variables
     invoke_long_callback(state, submit_heavy, [scenario], submit_status)
 
@@ -522,6 +516,7 @@ def menu_fct(state, var_name: str, fct, var_value):
     # correct page
     try:
         state.page = var_value['args'][0]
+        navigate(state, to=state.page)
     except BaseException:
         print("Warning : No args were found")
 
@@ -534,7 +529,7 @@ def menu_fct(state, var_name: str, fct, var_value):
 ##########################################################################
 # Creation of state and initial values
 ##########################################################################
-gui = Gui(page=Markdown(main_md), css_file='main')
+gui = Gui(pages=pages, css_file='main')
 partial_table = gui.add_partial(da_display_table_md)
 
 # value of width and height for tables
@@ -601,16 +596,19 @@ def initialize_variables():
     selected_scenario_two = None
 
 
-initialize_variables()
 
-pd.read_csv('data/time_series_demand copy.csv').to_csv('data/time_series_demand.csv')
 
 if __name__ == "__main__":
-    gui.run(title="Production planning",
+    initialize_variables()
+
+    pd.read_csv('data/time_series_demand copy.csv').to_csv('data/time_series_demand.csv')
+    
+    
+    gui.run(title="Production planning dev",
     		host='0.0.0.0',
     		port=os.environ.get('PORT', '5050'),
     		dark_mode=False,
-            use_reloader=False)
+            theme=common_theme, light_theme=light_theme, dark_theme=dark_theme)
 else:
     app = gui.run(title="Production planning",
                   dark_mode=False,

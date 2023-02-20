@@ -71,8 +71,8 @@ def detect_inactive_session(state):
 
 
 login_md = """
-<|part|id=part_dialog_button|
-Welcome, <|{login if login != '' else 'login'}|button|on_action={open_dialog_user}|id=dialog_button|>!
+<|part|id=part_dialog_button|class_name=container text_right pt1
+Welcome, <|{login if login != '' else 'login'}|button|on_action={open_dialog_user}|id=dialog_button|> !
 |>
 
 <|{dialog_user}|dialog|title=Set account|id=dialog_user|width=20%|
