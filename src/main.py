@@ -35,8 +35,6 @@ PATH_TO_TABLE = str(tempdir / "table.csv")
 Config.configure_global_app(clean_entities_enabled=True)
 tp.clean_all_entities()
 
-cc_create_scenarios_for_cycle()
-
 from pages.scenario_manager_md import *
 
 
@@ -534,6 +532,7 @@ def menu_fct(state, var_name: str, fct, var_value):
 ##########################################################################
 # Creation of state and initial values
 ##########################################################################
+tp.Core().run()
 gui = Gui(page=Markdown(main_md), css_file='main')
 partial_table = gui.add_partial(da_display_table_md)
 
@@ -600,6 +599,7 @@ def initialize_variables():
     scenario_selector_two = scenario_selector.copy()
     selected_scenario_two = None
 
+cc_create_scenarios_for_cycle()
 
 initialize_variables()
 

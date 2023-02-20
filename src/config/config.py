@@ -70,3 +70,4 @@ pipeline_cfg = Config.configure_pipeline(id="pipeline",task_configs=[create_mode
 # this is through this variable that we will create new scenarios
 scenario_cfg = Config.configure_scenario(id="scenario",pipeline_configs=[pipeline_cfg], frequency=Frequency.MONTHLY)
 
+Config.export('config/config.toml')

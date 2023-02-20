@@ -90,7 +90,7 @@ def create_charts_md(ch_results):
             columns = [c for c in columns if 'Total' not in c] # in the pie, we don't want to show the total
             
             if charts_option[charts_i] in pie_possible :
-                md +="\n<|{pie_results.loc[" + str(columns) + "]}|chart|type=pie|x=values|label=labels|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='pie' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
+                md +="\n<|{pie_results.loc[" + str(columns) + "]}|chart|type=pie|values=values|labels=labels|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='pie' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
                 md += "\n<|{ch_results}|chart|x=index|" + y_format + "|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={ch_show_pie=='chart' and sm_graph_selected=='"+charts_option[charts_i]+"'}|>"
             else:
                 md += "\n<|{ch_results}|chart|x=index|" + y_format + "|width={width_chart}|height={height_chart}|layout={ch_layout_dict}|render={sm_graph_selected=='"+charts_option[charts_i]+"'}|>"

@@ -2,3 +2,6 @@ src/.data
 *.pyc
 src/login/login.json
 *.csv
+*.zip
+Dockerfile
+.DS_Store
