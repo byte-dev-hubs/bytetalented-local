@@ -5,3 +5,4 @@ src/login/login.json
 *.zip
 Dockerfile
 .DS_Store
+src/.vscode/launch.json

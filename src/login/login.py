@@ -18,7 +18,8 @@ new_account = False
 all_scenarios = tp.get_scenarios()
 
 users = {}
-json.dump(users, open('login/login.json', 'w'))
+with open('login/login.json', 'w') as f:
+    json.dump(users, f)
 
 dialog_user = True
 user_selector = [('Create new user',Icon('/images/new_account.png','Create new user'))]
@@ -60,7 +61,8 @@ def test_password(users, login, new_password):
 
 def detect_inactive_session(state):
     users[state.login]['last_visit'] = str(dt.datetime.now())
-    json.dump(users, open('login/login.json', 'w'))
+    with open('login/login.json', 'w') as f:
+        json.dump(users, f)
 
     for user in users.keys():
         if (dt.datetime.now() - dt.datetime.strptime(users[user]['last_visit'],

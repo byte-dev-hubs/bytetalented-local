@@ -1,18 +1,17 @@
-# basic packages of python to handle data
-from login.login import *
-import pandas as pd
-
 # importation of Taipy core
 import taipy as tp
 
 # Backend import of my python code | to create scenario, we need the original pipeline_cfg and scenario_cfg
 # fixed_variables_default is used as the default values for the fixed variables
-from config.config import fixed_variables_default, scenario_cfg, pipeline_cfg
-from taipy import Config
+from config.config import fixed_variables_default
 
 
 # importation of useful functions for Taipy frontend
-from taipy.gui import Gui, Markdown, notify, Icon, invoke_long_callback
+from taipy.gui import Gui, notify, Icon, navigate
+
+from login.login import *
+
+
 
 # Frontend import of my python code | importation of the pages : compare_scenario_md page, scenario_manager_md page, databases_md page
 # the * is used because sometimes we need the functions and/or variables
@@ -21,21 +20,17 @@ from pages.compare_cycles_md import *
 from pages.compare_scenario_md import *
 from pages.databases_md import *
 from pages.data_visualization_md import *
+from pages.scenario_manager_md import *
+
 
 # import to create the temporary file
 import pathlib
-
 
 # this path is used to create a temporary file that will allow us to
 # download a table in the Datasouces page
 tempdir = pathlib.Path(".tmp")
 tempdir.mkdir(exist_ok=True)
 PATH_TO_TABLE = str(tempdir / "table.csv")
-
-Config.configure_global_app(clean_entities_enabled=True)
-tp.clean_all_entities()
-
-from pages.scenario_manager_md import *
 
 
 ###############################################################################
@@ -63,6 +58,7 @@ def on_change_user_selector(state):
 
 
 def reinitialize_state_after_login(state):
+    state.sm_tree_dict, state.sm_year_selector, state.sm_month_selector = create_time_selectors()
     scenarios = [s for s in tp.get_scenarios(
     ) if 'user' in s.properties and state.login == s.properties['user']]
     state.scenario_counter = len(scenarios)
@@ -103,7 +99,8 @@ def validate_login(state, id, action, payload):
                 users[state.login]["password"] = encode(state.password)
                 users[state.login]["last_visit"] = str(dt.datetime.now())
 
-                json.dump(users, open('login/login.json', 'w'))
+                with open('login/login.json', 'w') as f:
+                    json.dump(users, f)
                 reinitialize_state_after_login(state)
 
                 state.user_selector = [
@@ -138,19 +135,19 @@ def validate_login(state, id, action, payload):
 # scenario_manager_md, compare_scenario_md, databases_md will be visible depending on the page variable.
 # this is the purpose of the 'render' parameter.
 menu_lov = [
-    ("Data Visualization",
+    ("Data-Visualization",
      Icon(
          'images/chart_menu.svg',
          'Data Visualization')),
-    ("Scenario Manager",
+    ("Scenario-Manager",
      Icon(
          'images/Scenario.svg',
          'Scenario Manager')),
-    ("Compare Scenarios",
+    ("Compare-Scenarios",
      Icon(
          'images/compare.svg',
          'Compare Scenarios')),
-    ("Compare Cycles",
+    ("Compare-Cycles",
      Icon(
          'images/Cycle.svg',
          'Compare Cycles')),
@@ -159,239 +156,15 @@ menu_lov = [
          'images/Datanode.svg',
          'Databases'))]
 
-main_md = login_md + """
 
-<|menu|label=Menu|lov={menu_lov}|on_action=menu_fct|id=menu_id|>
-
-<|part|render={page == 'Data Visualization'}|
-""" + da_data_visualisation_md + """
-|>
-
-<|part|render={page == 'Scenario Manager'}|
-""" + sm_scenario_manager_md + """
-|>
-
-<|part|render={page == 'Compare Scenarios'}|
-""" + cs_compare_scenario_md + """
-|>
-
-<|part|render={page == 'Compare Cycles'}|
-""" + cc_compare_cycles_md + """
-|>
-
-<|part|render={page == 'Databases'}|
-""" + da_databases_md + """
-|>
-
-"""
-
-
-###############################################################################
-# important functions to create/submit/handle scenarios
-###############################################################################
-
-def update_scenario_selector(state, scenarios: list):
-    """
-    This function will update the scenario selectors. It will be used when
-    we create a new scenario. If there is a scenario that is created, we will
-    add its (id,name) in this list.
-
-    Args:
-        scenarios (list): a list of tuples (scenario,properties)
-    """
-
-    state.scenario_selector = [(s.id, s.name) if not s.is_primary else (
-        s.id, Icon('images/main.svg', s.name)) for s in scenarios]
-    state.scenario_counter = len(state.scenario_selector)
-    state.scenario_selector_two = state.scenario_selector.copy()
-
-    sm_tree_dict[state.sm_selected_year][state.sm_selected_month] = state.scenario_selector
-
-
-def make_primary(state):
-    tp.set_primary(tp.get(state.selected_scenario))
-    scenarios = [s for s in tp.get_scenarios(
-    ) if 'user' in s.properties and state.login == s.properties['user']]
-    update_scenario_selector(state, scenarios)
-    state.selected_scenario_is_primary = True
-
-
-def delete_scenario_fct(state):
-    if tp.get(state.selected_scenario).is_primary:
-        notify(
-            state,
-            "warning",
-            "You can't delete the primary scenario of the month")
-    else:
-        tp.delete(state.selected_scenario)
-        scenarios = [s for s in tp.get_scenarios(
-        ) if 'user' in s.properties and state.login == s.properties['user']]
-        update_scenario_selector(state, scenarios)
-
-        if state.scenario_counter != 0:
-            state.selected_scenario = state.scenario_selector[0][0]
-
-
-def create_new_scenario(state):
-    """
-    This function is used whan the 'create' button is pressed in the scenario_manager_md page.
-    See the scenario_manager_md page for more information. It will configure another scenario,
-    create it and submit it.
-
-    Args:
-        state (_type_): the state object of Taipy
-    """
-
-    # update the scenario counter
-    state.scenario_counter += 1
-
-    print("Creating scenario...")
-    name = "Scenario " + dt.datetime.now().strftime('%d-%b-%Y') + " Nb : " + \
-        str(state.scenario_counter)
-    scenario = tp.create_scenario(scenario_cfg, name=name)
-    scenario.properties['user'] = state.login
-
-    # get all the scenarios and their properties
-    print("Getting properties...")
-    scenarios = [s for s in tp.get_scenarios(
-    ) if 'user' in s.properties and state.login == s.properties['user']]
-
-    # change the scenario that is selected. The new scenario is the one that
-    # is selected
-    state.selected_scenario = scenario.id
-
-    # update the scenario selector
-    print("Updating scenario selector...")
-    update_scenario_selector(state, scenarios)
-
-    # submit this scenario
-    print("Submitting it...")
-    submit_scenario(state)
-
-
-def catch_error_in_submit(state):
-    """
-    This function is used to catch the error that can occur when we submit a scenario. When an
-    error is catched, a notification will appear and variables wil be changed to avoid any error.
-    The errors comes from the solution of the Cplex model where infeasible or unbounded problems
-    can happen if the fixed variables are wrongly set.
-
-    Args:
-        state (_type_): the state object of Taipy
-    """
-
-    # if our initial production is higher that our max capacity of production
-    if state.fixed_variables["Initial_Production_FPA"] > state.fixed_variables["Max_Capacity_FPA"]:
-        state.fixed_variables["Initial_Production_FPA"] = state.fixed_variables["Max_Capacity_FPA"]
-        notify(
-            state,
-            "warning",
-            "Value of initial production FPA is greater than max production A")
-
-    # if our initial production is higher that our max capacity of production
-    if state.fixed_variables["Initial_Production_FPB"] > state.fixed_variables["Max_Capacity_FPB"]:
-        state.fixed_variables["Initial_Production_FPB"] = state.fixed_variables["Max_Capacity_FPB"]
-        notify(
-            state,
-            "warning",
-            "Value of initial production FPB is greater than max production B")
-
-    # if our initial stock is higher that our max capacity of production
-    if state.fixed_variables["Initial_Stock_RPone"] > state.fixed_variables["Max_Stock_RPone"]:
-        state.fixed_variables["Initial_Stock_RPone"] = state.fixed_variables["Max_Stock_RPone"]
-        notify(
-            state,
-            "warning",
-            "Value of initial stock RP1 is greater than max stock 1")
-
-    # if our initial stock is higher that our max capacity of production
-    if state.fixed_variables["Initial_Stock_RPtwo"] > state.fixed_variables["Max_Stock_RPtwo"]:
-        state.fixed_variables["Initial_Stock_RPtwo"] = state.fixed_variables["Max_Stock_RPtwo"]
-        notify(
-            state,
-            "warning",
-            "Value of initial stock RP2 is greater than max stock 2")
-
-    # if our initial productions are higher that our max capacity of
-    # productions
-    if state.fixed_variables["Initial_Production_FPA"] + \
-            state.fixed_variables["Initial_Production_FPB"] > state.fixed_variables["Max_Capacity_of_FPA_and_FPB"]:
-                
-        state.fixed_variables["Initial_Production_FPA"] = int(state.fixed_variables["Max_Capacity_of_FPA_and_FPB"] / 2)
-        state.fixed_variables["Initial_Production_FPB"] = int(state.fixed_variables["Max_Capacity_of_FPA_and_FPB"] / 2)
-        
-        notify(
-            state,
-            "warning",
-            "Value of initial productions is greater than the max capacities")
-
-
-def submit_heavy(scenario):
-    tp.submit(scenario)
-
-def submit_status(state, status):
-    # update all the variables that we want to update (ch_results, pie_results
-    # and metrics)
-    update_variables(state)
-
-
-def submit_scenario(state):
-    """
-    This function will submit the scenario that is selected. It will be used when the 'submit' button is pressed
-    or when we create a new scenario. It checks if there is any errors then it will change the parameters of the
-    problem and submit the scenario. At the end, we update all the variables that we want to update.
-
-    Args:
-        state (_type_): the state object of Taipy
-
-    Returns:
-        _type_: _description_
-    """
-
-    detect_inactive_session(state)
-
-    # see if there are errors in the parameters that will be given to the
-    # scenario
-    catch_error_in_submit(state)
-
-    # getting the scenario
-    scenario = tp.get(state.selected_scenario)
-
-    # setting the scenario with the right parameters
-    scenario.fixed_variables.write(state.fixed_variables._dict)
-
-    # running the scenario in a long callback and update variables
-    invoke_long_callback(state, submit_heavy, [scenario], submit_status)
-
-
-def update_variables(state):
-    """This function is only used in the submit_scenario or when the selected_scenario changes. It will update all the useful variables that we want to update.
-
-    Args:
-        state (_type_): the state object of Taipy
-    """
-    # getting the selected scenario
-    scenario = tp.get(state.selected_scenario)
-
-    # read the result
-    state.ch_results = scenario.pipelines['pipeline'].results.read()
-    state.pie_results = pd.DataFrame(
-        {
-            "values": state.ch_results.sum(axis=0),
-            "labels": list(state.ch_results.columns)
-        })
-
-    state.sum_costs = state.ch_results['Total Cost'].sum()
-
-    bool_costs_of_stock = [c for c in state.ch_results.columns
-                           if 'Cost' in c and 'Total' not in c and 'Stock' in c]
-    state.sum_costs_of_stock = int(state.ch_results[bool_costs_of_stock].sum(axis=1)\
-                                                                        .sum(axis=0))
-
-    bool_costs_of_BO = [c for c in state.ch_results.columns
-                        if 'Cost' in c and 'Total' not in c and 'BO' in c]
-    state.sum_costs_of_BO = int(state.ch_results[bool_costs_of_BO].sum(axis=1)\
-                                                                  .sum(axis=0))
+pages = {
+    "/":login_md + "<|menu|label=Menu|lov={menu_lov}|on_action=menu_fct|id=menu_id|>",
+    "Data-Visualization": da_data_visualisation_md,
+    "Scenario-Manager": sm_scenario_manager_md,
+    "Compare-Scenarios": cs_compare_scenario_md,
+    "Compare-Cycles": cc_compare_cycles_md,
+    "Databases": da_databases_md,
+}
 
 
 def create_chart(ch_results: pd.DataFrame, var: str):
@@ -418,7 +191,6 @@ def create_chart(ch_results: pd.DataFrame, var: str):
 def on_change(state, var_name, var_value):
     """This function is called whener a change in the state variables is done. When a change is seen, operations can be created
     depending on the variable changed
-
     Args:
         state (State): the state object of Taipy
         var_name (str): the changed variable name
@@ -503,8 +275,6 @@ def on_change(state, var_name, var_value):
             state.chart.to_csv(state.d_chart_csv_path, sep=',')
 
 
-# the initial page is the "Scenario Manager" page
-page = "Data Visualization"
 
 
 def menu_fct(state, var_name: str, fct, var_value):
@@ -520,6 +290,7 @@ def menu_fct(state, var_name: str, fct, var_value):
     # correct page
     try:
         state.page = var_value['args'][0]
+        navigate(state, state.page)
     except BaseException:
         print("Warning : No args were found")
 
@@ -528,29 +299,18 @@ def menu_fct(state, var_name: str, fct, var_value):
     if state.page != 'Databases' and state.sm_graph_selected == 'All':
         state.sm_graph_selected = 'Costs'
 
-
-##########################################################################
-# Creation of state and initial values
-##########################################################################
-tp.Core().run()
-gui = Gui(page=Markdown(main_md), css_file='main')
-partial_table = gui.add_partial(da_display_table_md)
-
-# value of width and height for tables
-width_table = "100%"
-height_table = "100%"
-
-# value of width and height for charts
-width_chart = "100%"
-height_chart = "60vh"
-
+###############################################################################
+# Initialization
+###############################################################################
 
 def initialize_variables():
     # initial value of chart
     global scenario, pie_results, sum_costs, sum_costs_of_stock, sum_costs_of_BO, scenario_counter,\
         cost_data, stock_data, purchase_data, production_data, fpa_data, fpb_data, bo_data, rp1_data, rp2_data, chart, ch_results,\
         chart, scenario_selector, selected_scenario, selected_scenario_is_primary, scenario_selector_two, selected_scenario_two,\
-        fixed_variables
+        fixed_variables, sm_tree_dict, sm_year_selector, sm_month_selector
+
+    cc_create_scenarios_for_cycle()
 
     fixed_variables = fixed_variables_default
 
@@ -599,19 +359,34 @@ def initialize_variables():
     scenario_selector_two = scenario_selector.copy()
     selected_scenario_two = None
 
-cc_create_scenarios_for_cycle()
+    sm_tree_dict, sm_year_selector, sm_month_selector = create_time_selectors()
 
-initialize_variables()
 
-pd.read_csv('data/time_series_demand copy.csv').to_csv('data/time_series_demand.csv')
 
+
+
+##########################################################################
+# Creation of state and initial values
+##########################################################################
 if __name__ == "__main__":
-    gui.run(title="Production planning",
-    		host='0.0.0.0',
-    		port=os.environ.get('PORT', '5050'),
-    		dark_mode=False,
-            use_reloader=False)
-else:
-    app = gui.run(title="Production planning",
-                  dark_mode=False,
-                  run_server=False)
+    tp.Core().run()
+
+    initialize_variables()
+
+    pd.read_csv('data/time_series_demand copy.csv').to_csv('data/time_series_demand.csv')
+
+    # the initial page is the "Scenario Manager" page
+    page = "Data Visualization"
+
+    gui = Gui(pages=pages, css_file='main')
+    partial_table = gui.add_partial(da_display_table_md)
+
+    # value of width and height for tables
+    width_table = "100%"
+    height_table = "100%"
+
+    # value of width and height for charts
+    width_chart = "100%"
+    height_chart = "60vh"
+
+    gui.run(title="Production planning", dark_mode=False)
