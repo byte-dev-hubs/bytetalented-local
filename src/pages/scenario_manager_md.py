@@ -1,4 +1,4 @@
-from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_layout_dict, ch_results
+from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_results
 from pages.annex_scenario_manager.parameters_md import pa_parameters_md, pa_param_selector, pa_param_selected, pa_choice_product_param, pa_product_param, solver_name, list_of_solvers
 
 from taipy.gui.gui_actions import notify
@@ -6,40 +6,6 @@ from taipy.gui import Icon
 import taipy as tp
 
 import datetime as dt
-
-
-
-def remove_scenario_from_tree(scenario, sm_tree_dict: dict):
-    """This function finds the scenario in the tree and removes it
-
-    Args:
-        scenario (Scenario): the scenario to be deleted from the tree
-        sm_tree_dict (dict): the tree dict from which the scenario has to be deleted from
-
-    Returns:
-        tree: the tree without the scenario
-    """
-    # This will be the cycle keys that will be dropped if they contain no
-    # scenario
-    cycle_keys_to_pop = []
-
-    # We explore our 2-level tree
-    for cycle, scenarios_ in sm_tree_dict.items():
-        for scenario_id, scenario_name in scenarios_:
-            if scenario_id == scenario.id:
-                # Remove the scenario that has the same id from the tree
-                sm_tree_dict[cycle].remove((scenario_id, scenario_name))
-
-                # Add the cycle to the cycles to drop if it is empty
-                if len(sm_tree_dict[cycle]) == 0:
-                    cycle_keys_to_pop += [cycle]
-                print("------------- Scenario found and deleted -------------")
-                break
-
-    # Remove the empty cycles
-    for cycle in cycle_keys_to_pop:
-        sm_tree_dict.pop(cycle)
-    return sm_tree_dict
 
 sm_tree_dict = {}
 
@@ -149,45 +115,28 @@ def change_scenario_selector(state):
 
 sm_scenario_manager_md = """
 <|part|class_name=container|
-# **Scenario**{: .color_primary } Manager
+# **Scenario**{: .color-primary } Manager
 
 <|layout|columns=8 4 auto auto|columns[mobile]=1|class_name=align_columns_bottom|
     <layout_scenario|
         <|layout|columns=1 1 3|columns[mobile]=1|class_name=align_columns_bottom|
-            <|
-Year
+Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on_change=change_sm_month_selector|>
 
-<|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on_change=change_sm_month_selector|>
-            |>
+Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
 
-            <|
-Month
-
-<|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
-            |>
-
-            <|
-Scenario
-
-<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
-            |>
+Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
         |>
     |layout_scenario>
 
-    <graph|
-Graph
-
-<|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
-    |graph>
+Graph <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 
 <toggle_chart|
 Pie/Line chart
+
 <|{ch_show_pie}|toggle|lov={ch_choice_chart}|value_by_id|active={not 'Product ' in sm_graph_selected}|>
 |toggle_chart>
 
-<button_configure_scenario|
 <|{sm_show_config_scenario_name}|button|on_action=show_config_scenario_action|active={sm_selected_month == sm_current_month and sm_selected_year == sm_current_year}|>
-|button_configure_scenario>
 |>
 
 <|part|render={sm_show_config_scenario}|class_name=mt2|

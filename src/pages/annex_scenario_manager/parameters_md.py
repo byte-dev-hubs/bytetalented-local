@@ -1,8 +1,21 @@
-from .chart_md import ch_chart_md, ch_layout_dict, ch_results
+from .chart_md import ch_chart_md, ch_results
 from config.config import fixed_variables_default
 from taipy.gui import Icon
 
 import pulp as pl
+
+def create_md_for_one_product(fixed_variables, var_p):
+    slider_md = ""
+    for var in var_p :
+                min_ = str(int(fixed_variables[var]*0.35))
+                max_ = str(int(fixed_variables[var]*1.65)) if fixed_variables[var] != 0 else '50'
+                
+                name_of_var = var.replace('cost','Unit Cost -')
+                name_of_var = name_of_var[0].upper() + name_of_var[1:].replace('_',' ').replace('one','1').replace('two','2')
+                
+                slider_md += "\n\n" + name_of_var + " : *<|{fixed_variables."+var+"}|>*"
+                slider_md += "\n<|{fixed_variables."+var+"}|slider|min="+min_+"|max="+max_+"|step=5|>"
+    return slider_md
 
 def create_sliders(fixed_variables):
     """"
@@ -33,15 +46,7 @@ def create_sliders(fixed_variables):
             
             # sliders are being created for each variable (var_p)
             # min and max value are also created automatically
-            for var in var_p :
-                min_ = str(int(fixed_variables[var]*0.35))
-                max_ = str(int(fixed_variables[var]*1.65)) if fixed_variables[var] != 0 else '50'
-                
-                name_of_var = var.replace('cost','Unit Cost -')
-                name_of_var = name_of_var[0].upper() + name_of_var[1:].replace('_',' ').replace('one','1').replace('two','2')
-                
-                slider_md += "\n\n" + name_of_var + " : *<|{fixed_variables."+var+"}|>*"
-                slider_md += "\n<|{fixed_variables."+var+"}|slider|orientation=h|min="+min_+"|max="+max_+"|step=5|>"
+            slider_md += create_md_for_one_product(fixed_variables, var_p)
         else :
             # the part will be shown depending on the product
             for p in products :
@@ -53,18 +58,7 @@ def create_sliders(fixed_variables):
                 
                 # sliders are being created for each variable (var_p)
                 # min and max value are also created automatically
-                for var in var_p :
-                    min_ = str(int(fixed_variables[var]*0.35))
-                    max_ = str(int(fixed_variables[var]*1.65)) if fixed_variables[var] != 0 else '50'
-                    
-                    name_of_var = var.replace('cost','Unit Cost -')
-                    name_of_var = name_of_var[0].upper() + name_of_var[1:].replace('_',' ').replace('one','1').replace('two','2')
-                    
-                    slider_md += "\n\n" + name_of_var + " : *<|{fixed_variables."+var+"}|>*"
-                    slider_md += "\n<|{fixed_variables."+var+"}|slider|orientation=h|min="+min_+"|max="+max_+"|step=5|>"
-                    
-    
-                
+                slider_md += create_md_for_one_product(fixed_variables, var_p)
                 slider_md += "\n|>"
         slider_md+="\n|>"
     return slider_md
@@ -72,11 +66,10 @@ def create_sliders(fixed_variables):
 pa_sliders_md = create_sliders(fixed_variables_default)
 
 pa_parameters_md = """
-<|layout|columns=9 3|columns[mobile]=1|gap=1.5rem
+<|layout|columns=9 3|columns[mobile]=1|gap=1.5rem|
 """ + ch_chart_md + """ 
 
 <|
-
 <|{pa_param_selected}|selector|lov={pa_param_selector}|width=100%|class_name=mb1|>
 
 """ + pa_sliders_md + """

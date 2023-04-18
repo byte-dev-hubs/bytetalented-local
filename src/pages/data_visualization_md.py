@@ -22,40 +22,28 @@ da_initial_variables.columns = [col[0].upper() +
 
 
 da_data_visualisation_md = """
-<|part|class_name=container|
-# Data **Visualization**{: .color_primary } 
+<|container|
+# Data **Visualization**{: .color-primary } 
 
-<|Expand here to see more data|expanded=False|expandable|
+<|Expand here to see more data|expandable|expanded=False|
 
     <|layout|columns=1 1 1|columns[mobile]=1|
-        <|
-### Initial **stock**{: .color_secondary } 
-
+### Initial **stock**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Stock' in col]]}|table|show_all|width=100%|>
-        |>
-
-        <|
-### Initial **production**{: .color_secondary } 
-
+        
+### Initial **production**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Production' in col]]}|table|show_all|width=100%|>
-        |>
 
-        <|
-### Incoming **purchased material**{: .color_secondary } 
-
+### Incoming **purchased material**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Purchase' in col]]}|table|show_all|width=100%|>
-        |>
     |>
 
 
-## **Demand**{: .color_secondary } of the upcoming months
-
+## **Demand**{: .color-secondary } of the upcoming months
 <|{da_initial_demand.round()}|table|width=fit-content|show_all|height=fit-content|>
-
 |>
 
-### **Evolution**{: .color_primary } of the demand
-
-<|{da_initial_demand}|chart|x=Month|y[1]=Demand A|y[2]=Demand B|width=100%|>
+### **Evolution**{: .color-primary } of the demand
+<|{da_initial_demand}|chart|x=Month|y[1]=Demand A|y[2]=Demand B|>
 |>
 """

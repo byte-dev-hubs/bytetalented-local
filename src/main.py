@@ -239,7 +239,7 @@ def create_new_scenario(state):
     state.scenario_counter += 1
 
     print("Creating scenario...")
-    name = "Scenario " + dt.datetime.now().strftime('%d-%b-%Y') + " Nb : " + \
+    name = dt.datetime.now().strftime('%d-%b-%Y') + " Nb : " + \
         str(state.scenario_counter)
     scenario = tp.create_scenario(scenario_cfg, name=name)
     scenario.properties['user'] = state.login
@@ -341,8 +341,6 @@ def submit_scenario(state):
         _type_: _description_
     """
 
-    detect_inactive_session(state)
-
     # see if there are errors in the parameters that will be given to the
     # scenario
     catch_error_in_submit(state)
@@ -379,13 +377,15 @@ def update_variables(state):
 
     state.sum_costs = state.ch_results['Total Cost'].sum()
 
-    bool_costs_of_stock = [c for c in state.ch_results.columns
-                           if 'Cost' in c and 'Total' not in c and 'Stock' in c]
+    bool_costs_of_stock = [c for c in state.ch_results.columns if 'Cost' in c and\
+                                                                  'Total' not in c and\
+                                                                  'Stock' in c]
     state.sum_costs_of_stock = int(state.ch_results[bool_costs_of_stock].sum(axis=1)\
                                                                         .sum(axis=0))
 
-    bool_costs_of_BO = [c for c in state.ch_results.columns
-                        if 'Cost' in c and 'Total' not in c and 'BO' in c]
+    bool_costs_of_BO = [c for c in state.ch_results.columns if 'Cost' in c and\
+                                                                'Total' not in c and\
+                                                                'BO' in c]
     state.sum_costs_of_BO = int(state.ch_results[bool_costs_of_BO].sum(axis=1)\
                                                                   .sum(axis=0))
 
@@ -404,8 +404,7 @@ def create_chart(ch_results: pd.DataFrame, var: str):
     if var == 'Cost':
         columns = ['index'] + [col for col in ch_results.columns if var in col]
     else:
-        columns = [
-            'index'] + [col for col in ch_results.columns if var in col and 'Cost' not in col]
+        columns = ['index'] + [col for col in ch_results.columns if var in col and 'Cost' not in col]
 
     chart = ch_results[columns]
     return chart
@@ -429,11 +428,7 @@ def on_change(state, var_name, var_value):
         if scenario.results.is_ready_for_reading:
             # it will set the sliders to the right values when a scenario is
             # changed
-            fixed_temp = tp.get(state.selected_scenario).fixed_variables.read()
-            state_fixed_variables = state.fixed_variables._dict.copy()
-            for key in state.fixed_variables.keys():
-                state_fixed_variables[key] = fixed_temp[key]
-            state.fixed_variables = state_fixed_variables
+            state.fixed_variables = tp.get(state.selected_scenario).fixed_variables.read()
             # I update all the other useful variables
             update_variables(state)
 
@@ -451,45 +446,21 @@ def on_change(state, var_name, var_value):
         or (var_name == 'page' and var_value == 'Databases'):
 
         str_to_select_chart = None
+        chart_mapping = {
+            'Costs': 'Cost',
+            'Purchases': 'Purchase',
+            'Productions': 'Production',
+            'Stocks': 'Stock',
+            'Back Order': 'BO',
+            'Product FPA': 'FPA',
+            'Product FPB': 'FPB',
+            'Product RP1': 'RP1',
+            'Product RP2': 'RP2'
+        }
 
-        if state.sm_graph_selected == 'Costs':
-            str_to_select_chart = 'Cost'
-            state.cost_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Purchases':
-            str_to_select_chart = 'Purchase'
-            state.purchase_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Productions':
-            str_to_select_chart = 'Production'
-            state.production_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Stocks':
-            str_to_select_chart = 'Stock'
-            state.stock_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Back Order':
-            str_to_select_chart = 'BO'
-            state.bo_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Product FPA':
-            str_to_select_chart = 'FPA'
-            state.fpa_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Product FPB':
-            str_to_select_chart = 'FPB'
-            state.fpb_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Product RP1':
-            str_to_select_chart = 'RP1'
-            state.rp1_data = create_chart(state.ch_results, str_to_select_chart)
-            
-        elif state.sm_graph_selected == 'Product RP2':
-            str_to_select_chart = 'RP2'
-            state.rp2_data = create_chart(state.ch_results, str_to_select_chart)
+        str_to_select_chart = chart_mapping.get(state.sm_graph_selected)
 
         state.chart = create_chart(state.ch_results, str_to_select_chart)
-        state.partial_table.update_content(state, da_create_display_table_md(str_to_select_chart.lower() + '_data'))
 
 
         # if we are on the 'Databases' page, we have to create an temporary csv
@@ -530,21 +501,11 @@ def menu_fct(state, var_name: str, fct, var_value):
 # Creation of state and initial values
 ##########################################################################
 gui = Gui(pages=pages, css_file='main')
-partial_table = gui.add_partial(da_display_table_md)
-
-# value of width and height for tables
-width_table = "100%"
-height_table = "100%"
-
-# value of width and height for charts
-width_chart = "100%"
-height_chart = "60vh"
-
 
 def initialize_variables():
     # initial value of chart
     global scenario, pie_results, sum_costs, sum_costs_of_stock, sum_costs_of_BO, scenario_counter,\
-        cost_data, stock_data, purchase_data, production_data, fpa_data, fpb_data, bo_data, rp1_data, rp2_data, chart, ch_results,\
+     chart, ch_results,\
         chart, scenario_selector, selected_scenario, selected_scenario_is_primary, scenario_selector_two, selected_scenario_two,\
         fixed_variables
 
@@ -564,16 +525,6 @@ def initialize_variables():
     sum_costs_of_BO = 0
     scenario_counter = 0
 
-    cost_data = create_chart(ch_results, 'Cost')
-    purchase_data = create_chart(ch_results, 'Purchase')
-    production_data = create_chart(ch_results, 'Production')
-    stock_data = create_chart(ch_results, 'Stock')
-    bo_data = create_chart(ch_results, 'BO')
-    fpa_data = create_chart(ch_results, 'FPA')
-    fpb_data = create_chart(ch_results, 'FPB')
-    rp1_data = create_chart(ch_results, 'RP1')
-    rp2_data = create_chart(ch_results, 'RP2')
-
     chart = ch_results[['index',
                         'Purchase RP1 Cost',
                         'Stock RP1 Cost',
@@ -585,7 +536,6 @@ def initialize_variables():
                         'BO FPB Cost',
                         'Total Cost']]
 
-
     # selectors that will be displayed on the pages
     scenario_selector = []
     selected_scenario = None
@@ -596,20 +546,10 @@ def initialize_variables():
     selected_scenario_two = None
 
 
-
-
 if __name__ == "__main__":
     initialize_variables()
 
     pd.read_csv('data/time_series_demand copy.csv').to_csv('data/time_series_demand.csv')
-    
-    
-    gui.run(title="Production planning dev",
-    		host='0.0.0.0',
-    		port=os.environ.get('PORT', '5050'),
-    		dark_mode=False,
-            theme=common_theme, light_theme=light_theme, dark_theme=dark_theme)
-else:
-    app = gui.run(title="Production planning",
-                  dark_mode=False,
-                  run_server=False)
+
+    gui.run(title="Production planning", theme=common_theme, light_theme=light_theme, dark_theme=dark_theme)
+

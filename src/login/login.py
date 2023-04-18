@@ -58,17 +58,6 @@ def test_password(users, login, new_password):
     return old_key == new_key
 
 
-def detect_inactive_session(state):
-    users[state.login]['last_visit'] = str(dt.datetime.now())
-    json.dump(users, open('login/login.json', 'w'))
-
-    for user in users.keys():
-        if (dt.datetime.now() - dt.datetime.strptime(users[user]['last_visit'],
-                                                    '%Y-%m-%d %H:%M:%S.%f')).seconds >= 6 * 3600:
-            [tp.delete(s.id) for s in tp.get_scenarios()
-             if 'user' in s.properties and users[user] == s.properties['user']]
-            users.pop(user)
-
 
 login_md = """
 <|part|id=part_dialog_button|class_name=container text_right pt1

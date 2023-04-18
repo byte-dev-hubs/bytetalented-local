@@ -96,7 +96,7 @@ def update_cc_data(state):
 
 cc_compare_cycles_md = """
 <|part|class_name=container|
-# **Compare**{: .color_primary} cycles
+# **Compare**{: .color-primary} cycles
 
 <|Start cycles comparison|button|on_action={update_cc_data}|class_name=mb2|>
 

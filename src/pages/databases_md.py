@@ -1,14 +1,8 @@
-da_display_table_md = "<|{ch_results.round()}|table|columns={list(chart.columns)}|height={height_table}|width=100%|>"
 d_chart_csv_path = None
-
-def da_create_display_table_md(str_to_select_chart):
-    return "<|{" + str_to_select_chart + \
-        "}|table|width=fit-content|height={height_table}|width=100%|>"
-
 
 da_databases_md = """
 <|part|class_name=container|
-# Data**sources**{: .color_primary } 
+# Data**sources**{: .color-primary } 
 
 <|layout|columns=3 2 1|columns[mobile]=1|class_name=align_columns_bottom|
 <layout_scenario|
@@ -42,10 +36,8 @@ Table
 <|{d_chart_csv_path}|file_download|name=table.csv|label=Download table|>
 |>
 
-<|part|render={len(scenario_selector)>0}|partial={partial_table}|class_name=mt2|>
-
-<|part|render=False|
-<|{scenario_counter}|>
+<|part|render={len(scenario_selector)>0}|class_name=mt2|
+<|{chart}|table|width=100%|rebuild|>
 |>
 |>
 """
