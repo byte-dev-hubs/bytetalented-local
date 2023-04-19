@@ -1,6 +1,7 @@
 from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_results
 from pages.annex_scenario_manager.parameters_md import pa_parameters_md, pa_param_selector, pa_param_selected, pa_choice_product_param, pa_product_param, solver_name, list_of_solvers
 
+
 from pages.shared import  update_scenario_selector
 
 from taipy.gui import notify, invoke_long_callback
@@ -23,6 +24,7 @@ Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|on_change=
 Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
         |>
     |layout_scenario>
+
 
 Graph <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 
@@ -109,6 +111,7 @@ def create_new_scenario(state):
     # submit this scenario
     print("Submitting it...")
     submit_scenario(state)
+
 
 
 def catch_error_in_submit(state):

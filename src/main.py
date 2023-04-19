@@ -8,6 +8,7 @@ import taipy as tp
 if __name__ == "__main__":
     tp.Core().run()
 
+
     cc_create_scenarios_for_cycle()
 
 # basic packages of python to handle data
@@ -15,6 +16,7 @@ import pandas as pd
 
 # importation of useful functions for Taipy frontend
 from taipy.gui import Gui, Icon, navigate
+
 
 # Frontend import of my python code | importation of the pages : compare_scenario_md page, scenario_manager_md page, databases_md page
 # the * is used because sometimes we need the functions and/or variables
@@ -32,6 +34,7 @@ from pages.scenario_manager_md import *
 # this is the main markdown page. We have here the other pages that are included in the main page.
 # scenario_manager_md, compare_scenario_md, databases_md will be visible depending on the page variable.
 # this is the purpose of the 'render' parameter.
+
 menu_lov = [("Data-Visualization", Icon('images/icons/visualize.svg', 'Data Visualization')),
             ("Scenario-Manager", Icon('images/icons/scenario.svg', 'Scenario Manager')),
             ("Compare-Scenarios", Icon('images/icons/compare.svg', 'Compare Scenarios')),
@@ -52,6 +55,7 @@ pages = {"/":root_md,
          "Compare-Cycles":cc_compare_cycles_md,
          'Databases':da_databases_md
          }
+
 
 
 def create_chart(ch_results: pd.DataFrame, var: str):
@@ -77,7 +81,6 @@ def create_chart(ch_results: pd.DataFrame, var: str):
 def on_change(state, var_name, var_value):
     """This function is called whener a change in the state variables is done. When a change is seen, operations can be created
     depending on the variable changed
-
     Args:
         state (State): the state object of Taipy
         var_name (str): the changed variable name
@@ -116,8 +119,10 @@ def on_change(state, var_name, var_value):
             state.chart.to_csv(state.d_chart_csv_path, sep=',')
 
 
+
 # The initial page is the "Scenario Manager" page
 page = "Data Visualization"
+
 
 def menu_fct(state, var_name: str, fct, var_value):
     """Functions that is called when there is a change in the menu control
@@ -133,6 +138,7 @@ def menu_fct(state, var_name: str, fct, var_value):
     state.page = var_value['args'][0]
     navigate(state, to=state.page)
 
+
     # security on the 'All' option of sm_graph_selected that can be selected
     # only on the 'Databases' page
     if state.page != 'Databases' and state.sm_graph_selected == 'All':
@@ -143,13 +149,13 @@ def menu_fct(state, var_name: str, fct, var_value):
 # Creation of state and initial values
 ##########################################################################
 
-
 def initialize_variables():
     # initial value of chart
     global scenario, pie_results, sum_costs, sum_costs_of_stock, sum_costs_of_BO,\
            chart, ch_results,\
            scenario_selector, selected_scenario, scenario_selector_two, selected_scenario_two,\
            fixed_variables
+
 
     fixed_variables = fixed_variables_default
 
@@ -183,6 +189,8 @@ def initialize_variables():
     scenario_selector_two = []
     selected_scenario_two = None
 
+    sm_tree_dict, sm_year_selector, sm_month_selector = create_time_selectors()
+
 
 if __name__ == "__main__":
     initialize_variables()
@@ -191,4 +199,3 @@ if __name__ == "__main__":
 
     gui = Gui(pages=pages)
     gui.run(title="Production planning")
-
