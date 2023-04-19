@@ -1,17 +1,20 @@
-da_display_table_md = "<center>\n<|{ch_results.round()}|table|columns={list(chart.columns)}|width=fit-content|height={height_table}|></center>\n"
+import pathlib
+
 d_chart_csv_path = None
 
-def da_create_display_table_md(str_to_select_chart):
-    return "<center>\n<|{" + str_to_select_chart + \
-        "}|table|width=fit-content|height={height_table}|></center>\n"
-
+# this path is used to create a temporary file that will allow us to
+# download a table in the Datasouces page
+tempdir = pathlib.Path(".tmp")
+tempdir.mkdir(exist_ok=True)
+PATH_TO_TABLE = str(tempdir / "table.csv")
 
 da_databases_md = """
-# Datasources
+<|container|
+# Data**sources**{: .color-primary } 
 
-<|layout|columns=3 2 1|columns[mobile]=1|
+<|layout|columns=3 2 1|columns[mobile]=1|class_name=align_columns_bottom|
 <layout_scenario|
-<|layout|columns=1 1 3|columns[mobile]=1|
+<|layout|columns=1 1 3|columns[mobile]=1|class_name=align_columns_bottom|
 <year|
 Year
 
@@ -27,24 +30,23 @@ Month
 <scenario|
 Scenario
 
-<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
+<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
 |scenario>
 |>
 |layout_scenario>
 
 <|
-**Table** \n \n <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
+Table
+
+<|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 |>
 
-<br/>
 <br/>
 <|{d_chart_csv_path}|file_download|name=table.csv|label=Download table|>
 |>
 
-<|part|render={len(scenario_selector)>0}|partial={partial_table}|>
-
-<|part|render=False|
-<|{scenario_counter}|>
+<|part|render={len(scenario_selector)>0}|class_name=mt2|
+<|{chart}|table|width=100%|rebuild|>
 |>
-
+|>
 """

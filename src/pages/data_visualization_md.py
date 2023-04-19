@@ -5,11 +5,10 @@ with open('data/fixed_variables_default.json', "r") as f:
     fixed_variables_default = json.load(f)
 
 # no code from Taipy Core has been executed yet, we read the csv file this way
-da_initial_demand = pd.read_csv('data/time_series_demand.csv')
-da_initial_demand = da_initial_demand[['Year', 'Month', 'Demand_A', 'Demand_B']].astype(int)
+da_initial_demand = pd.read_csv('data/time_series_demand.csv')[['Year', 'Month', 'Demand_A', 'Demand_B']]\
+                                                             .astype(int)
 
-da_initial_demand.columns = [col.replace('_', ' ') 
-                            for col in da_initial_demand.columns]
+da_initial_demand.columns = [col.replace('_', ' ') for col in da_initial_demand.columns]
 
 da_initial_variables = pd.DataFrame({key: [fixed_variables_default[key]]
                                     for key in fixed_variables_default.keys() if 'Initial' in key})
@@ -22,45 +21,28 @@ da_initial_variables.columns = [col[0].upper() +
 
 
 da_data_visualisation_md = """
-# Data Visualization
+<|container|
+# Data **Visualization**{: .color-primary } 
 
-<|Expand here|expanded=False|expandable|
+<|Expand here to see more data|expandable|expanded=False|
 
-<|layout|columns=1 1 1|columns[mobile]=1|
-<|
-## Initial stock
+    <|layout|columns=1 1 1|columns[mobile]=1|
+### Initial **stock**{: .color-secondary } \
+<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Stock' in col]]}|table|show_all|width=100%|>
+        
+### Initial **production**{: .color-secondary } \
+<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Production' in col]]}|table|show_all|width=100%|>
 
-<center>
-<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Stock' in col]]}|table|show_all|width=445px|>
-</center>
-|>
-
-<|
-## Initial Production
-
-<center>
-<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Production' in col]]}|table|show_all|width=445px|>
-</center>
-|>
-
-<|
-## Incoming Purchased Material
-
-<center>
-<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Purchase' in col]]}|table|show_all|width=445px|>
-</center>
-|>
-|>
+### Incoming **purchased material**{: .color-secondary } \
+<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Purchase' in col]]}|table|show_all|width=100%|>
+    |>
 
 
-## Demand of the upcoming months
-
-<center>
+## **Demand**{: .color-secondary } of the upcoming months
 <|{da_initial_demand.round()}|table|width=fit-content|show_all|height=fit-content|>
-</center>
 |>
 
-## Evolution of the demand
-
-<|{da_initial_demand}|chart|x=Month|y[1]=Demand A|y[2]=Demand B|width=100%|>
+### **Evolution**{: .color-primary } of the demand
+<|{da_initial_demand}|chart|x=Month|y[1]=Demand A|y[2]=Demand B|>
+|>
 """

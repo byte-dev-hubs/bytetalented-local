@@ -9,32 +9,42 @@ has_header = "True:bool"
 [DATA_NODE.fixed_variables]
 scope = "PIPELINE:SCOPE"
 
+[DATA_NODE.solver_name]
+scope = "SCENARIO:SCOPE"
+default_data = "Default"
+
 [DATA_NODE.model_created]
 scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
 
 [DATA_NODE.model_solved]
 scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
 
 [DATA_NODE.results]
 scope = "PIPELINE:SCOPE"
+cacheable = "True:bool"
+
 
 [TASK.create_model]
 inputs = [ "demand:SECTION", "fixed_variables:SECTION",]
 function = "algos.algos.create_model:function"
 outputs = [ "model_created:SECTION",]
-skippable = "False:bool"
+skippable = "True:bool"
 
 [TASK.solve_model]
-inputs = [ "model_created:SECTION",]
+inputs = [ "model_created:SECTION", "solver_name:SECTION",]
 function = "algos.algos.solve_model:function"
 outputs = [ "model_solved:SECTION",]
-skippable = "False:bool"
+skippable = "True:bool"
+
 
 [TASK.create_results]
 inputs = [ "model_solved:SECTION", "fixed_variables:SECTION", "demand:SECTION",]
 function = "algos.algos.create_results:function"
 outputs = [ "results:SECTION",]
-skippable = "False:bool"
+skippable = "True:bool"
+
 
 [PIPELINE.pipeline]
 tasks = [ "create_model:SECTION", "solve_model:SECTION", "create_results:SECTION",]

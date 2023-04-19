@@ -1,167 +1,91 @@
-from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_layout_dict, ch_results
-from pages.annex_scenario_manager.parameters_md import pa_parameters_md, pa_param_selector, pa_param_selected, pa_choice_product_param, pa_product_param
-
-from config.config import scenario_cfg
-from login.login import detect_inactive_session
+from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_results
+from pages.annex_scenario_manager.parameters_md import pa_parameters_md, pa_param_selector, pa_param_selected, pa_choice_product_param, pa_product_param, solver_name, list_of_solvers
 
 
-from taipy.gui import notify, Icon, invoke_long_callback
+from pages.shared import  update_scenario_selector
+
+from taipy.gui import notify, invoke_long_callback
 import taipy as tp
-
+from config.config import scenario_cfg
 import datetime as dt
-
 import pandas as pd
 
+sm_scenario_manager_md = """
+<|container|
+# **Scenario**{: .color-primary } Manager
+
+<|layout|columns=8 4 auto auto|columns[mobile]=1|class_name=align_columns_bottom|
+    <layout_scenario|
+        <|layout|columns=1 1 3|columns[mobile]=1|class_name=align_columns_bottom|
+Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|on_change=change_sm_month_selector|>
+
+Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|on_change=change_scenario_selector|>
+
+Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
+        |>
+    |layout_scenario>
 
 
-def create_sm_tree_dict(scenarios, sm_tree_dict: dict = None):
-    """This function creates a tree dict from a list of scenarios. The levels of the tree are:
-    year/month/scenario
+Graph <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 
-    Args:
-        scenarios (list): a list of scenarios
-        sm_tree_dict (dict, optional): the tree gathering all the scenarios. Defaults to None.
+<toggle_chart|
+Pie/Line chart
 
-    Returns:
-        tree: the tree created to classify the scenarios
-    """
-    print("Creating tree dict...")
-    if sm_tree_dict is None:
-        # Initialize the tree dict if it is not already initialized
-        sm_tree_dict = {}
+<|{ch_show_pie}|toggle|lov={ch_choice_chart}|value_by_id|active={not 'Product ' in sm_graph_selected}|>
+|toggle_chart>
 
-    # Add all the scenarios that are in the list
-    for scenario in scenarios:
-        # Create a name for the cycle
-        date = scenario.creation_date
-        year = f"{date.strftime('%Y')}"
-        period = f"{date.strftime('%b')}"
+<br/>
+<|{'Hide Configuration' if sm_show_config_scenario else 'Show Configuration'}|button|on_action={lambda s: s.assign('sm_show_config_scenario', not s.sm_show_config_scenario)}|active={sm_selected_month == sm_current_month and sm_selected_year == sm_current_year}|>
+|>
 
-        # Add the cycle if it was not already added
-        if year not in sm_tree_dict:
-            sm_tree_dict[year] = {}
-        if period not in sm_tree_dict[year]:
-            sm_tree_dict[year][period] = []
+<|part|render={sm_show_config_scenario}|class_name=mt2|
+""" + pa_parameters_md + """
+|>
 
-        # Append a new entry with the scenario id and the scenario name
-        scenario_name = (
-            Icon(
-                'images/main.svg',
-                scenario.name) if scenario.is_primary else scenario.name)
-        sm_tree_dict[year][period] += [(scenario.id, scenario_name)]
+<|part|render={not(sm_show_config_scenario)}|class_name=mt2|
+""" + ch_chart_md + """
+|>
+|>
+"""
 
-    return sm_tree_dict
+# Button for configuring scenario
+sm_show_config_scenario = True
 
 
-
-def create_time_selectors():
-    """This function creates the time selectors that will be displayed on the GUI and it is also creating 
-    the tree dict gathering all the scenarios.
-
-    Returns:
-        dict: the tree dict gathering all the scenarios
-        list: the list of years
-        list: the list of months
-    """
-    all_scenarios = tp.get_scenarios()
-    all_scenarios_ordered = sorted(
-        all_scenarios,
-        key=lambda x: x.creation_date.timestamp())
-
-    sm_tree_dict = create_sm_tree_dict(all_scenarios_ordered)
-
-    if sm_current_year not in list(sm_tree_dict.keys()):
-        sm_tree_dict[sm_current_year] = {}
-    if sm_current_month not in sm_tree_dict[sm_current_year]:
-        sm_tree_dict[sm_current_year][sm_current_month] = []
-
-    sm_year_selector = list(sm_tree_dict.keys())
-    sm_month_selector = list(sm_tree_dict[sm_selected_year].keys())
-
-    return sm_tree_dict, sm_year_selector, sm_month_selector
+# Choose the graph to display
+sm_graph_selector = [
+    'Costs',
+    'Purchases',
+    'Productions',
+    'Stocks',
+    'Back Order',
+    'Product RP1',
+    'Product RP2',
+    'Product FPA',
+    'Product FPB']
+sm_graph_selected = sm_graph_selector[0]
 
 
-def change_sm_month_selector(state):
-    """This function is called when the user changes the year selector. It updates the selector shown on the GUI
-    for the month selector and is calling the same function for the scenario selector.
-    
-
-    Args:
-        state (State): all the GUI variables
-    """
-    state.sm_month_selector = list(
-        state.sm_tree_dict[state.sm_selected_year].keys())
-
-    if state.sm_selected_month not in state.sm_month_selector:
-        state.sm_selected_month = state.sm_month_selector[0]
-
-    change_scenario_selector(state)
-
-
-def change_scenario_selector(state):
-    """This function is called when the user changes the month selector. It updates the selector shown on the GUI
-    for the scenario selector.
-    
-
-    Args:
-        state (State): all the GUI variables
-    """
-    state.scenario_selector = list(
-        state.sm_tree_dict[state.sm_selected_year][state.sm_selected_month])
-    state.scenario_selector_two = state.scenario_selector.copy()
-    if len(state.scenario_selector) > 0:
-        state.selected_scenario = state.scenario_selector[0][0]
-
-    if (state.sm_selected_month != sm_current_month or state.sm_selected_year !=
-            sm_current_year) and state.sm_show_config_scenario:
-        notify(state, "info", "This scenario is historical, you can't modify it")
-        state.sm_show_config_scenario = False
-
-
-###############################################################################
-# important functions to create/submit/handle scenarios
-###############################################################################
-
-def update_scenario_selector(state, scenarios: list):
-    """
-    This function will update the scenario selectors. It will be used when
-    we create a new scenario. If there is a scenario that is created, we will
-    add its (id,name) in this list.
-
-    Args:
-        scenarios (list): a list of tuples (scenario,properties)
-    """
-
-    state.scenario_selector = [(s.id, s.name) if not s.is_primary else (
-        s.id, Icon('images/main.svg', s.name)) for s in scenarios]
-    state.scenario_counter = len(state.scenario_selector)
-    state.scenario_selector_two = state.scenario_selector.copy()
-
-    state.sm_tree_dict[state.sm_selected_year][state.sm_selected_month] = state.scenario_selector
 
 
 def make_primary(state):
-    tp.set_primary(tp.get(state.selected_scenario))
-    scenarios = [s for s in tp.get_scenarios(
-    ) if 'user' in s.properties and state.login == s.properties['user']]
-    update_scenario_selector(state, scenarios)
-    state.selected_scenario_is_primary = True
+    tp.set_primary(state.selected_scenario)
+    update_scenario_selector(state)
+    state.selected_scenario = state.selected_scenario
 
 
 def delete_scenario_fct(state):
-    if tp.get(state.selected_scenario).is_primary:
+    if state.selected_scenario.is_primary:
         notify(
             state,
             "warning",
             "You can't delete the primary scenario of the month")
     else:
-        tp.delete(state.selected_scenario)
-        scenarios = [s for s in tp.get_scenarios(
-        ) if 'user' in s.properties and state.login == s.properties['user']]
-        update_scenario_selector(state, scenarios)
+        tp.delete(state.selected_scenario.id)
+        update_scenario_selector(state)
 
-        if state.scenario_counter != 0:
-            state.selected_scenario = state.scenario_selector[0][0]
+        if len(state.scenario_selector) != 0:
+            state.selected_scenario = state.scenario_selector[0]
 
 
 def create_new_scenario(state):
@@ -174,31 +98,20 @@ def create_new_scenario(state):
         state (_type_): the state object of Taipy
     """
 
-    # update the scenario counter
-    state.scenario_counter += 1
-
     print("Creating scenario...")
-    name = "Scenario " + dt.datetime.now().strftime('%d-%b-%Y') + " Nb : " + \
-        str(state.scenario_counter)
+    name = f"{dt.datetime.now().strftime('%d-%b-%Y')} Nb : {len(state.scenario_selector)}"
     scenario = tp.create_scenario(scenario_cfg, name=name)
     scenario.properties['user'] = state.login
 
-    # get all the scenarios and their properties
-    print("Getting properties...")
-    scenarios = [s for s in tp.get_scenarios(
-    ) if 'user' in s.properties and state.login == s.properties['user']]
-
-    # change the scenario that is selected. The new scenario is the one that
-    # is selected
-    state.selected_scenario = scenario.id
-
     # update the scenario selector
     print("Updating scenario selector...")
-    update_scenario_selector(state, scenarios)
+    update_scenario_selector(state)
+    state.selected_scenario = scenario
 
     # submit this scenario
     print("Submitting it...")
     submit_scenario(state)
+
 
 
 def catch_error_in_submit(state):
@@ -280,20 +193,20 @@ def submit_scenario(state):
         _type_: _description_
     """
 
-    detect_inactive_session(state)
-
     # see if there are errors in the parameters that will be given to the
     # scenario
     catch_error_in_submit(state)
 
     # getting the scenario
-    scenario = tp.get(state.selected_scenario)
 
     # setting the scenario with the right parameters
-    scenario.fixed_variables.write(state.fixed_variables._dict)
-
+    old_fixed_variables = state.selected_scenario.fixed_variables.read()
+    if old_fixed_variables != state.fixed_variables._dict:
+        state.selected_scenario.fixed_variables.write(state.fixed_variables._dict)
+    if state.solver_name != state.selected_scenario.solver_name.read():
+        state.selected_scenario.solver_name.write(state.solver_name)
     # running the scenario in a long callback and update variables
-    invoke_long_callback(state, submit_heavy, [scenario], submit_status)
+    invoke_long_callback(state, submit_heavy, [state.selected_scenario], submit_status)
 
 
 def update_variables(state):
@@ -302,11 +215,12 @@ def update_variables(state):
     Args:
         state (_type_): the state object of Taipy
     """
-    # getting the selected scenario
-    scenario = tp.get(state.selected_scenario)
+    # it will set the sliders to the right values when a scenario is changed
+    state.fixed_variables = state.selected_scenario.fixed_variables.read()
+
 
     # read the result
-    state.ch_results = scenario.pipelines['pipeline'].results.read()
+    state.ch_results = state.selected_scenario.pipelines['pipeline'].results.read()
     state.pie_results = pd.DataFrame(
         {
             "values": state.ch_results.sum(axis=0),
@@ -315,97 +229,16 @@ def update_variables(state):
 
     state.sum_costs = state.ch_results['Total Cost'].sum()
 
-    bool_costs_of_stock = [c for c in state.ch_results.columns
-                           if 'Cost' in c and 'Total' not in c and 'Stock' in c]
+    bool_costs_of_stock = [c for c in state.ch_results.columns if 'Cost' in c and\
+                                                                  'Total' not in c and\
+                                                                  'Stock' in c]
     state.sum_costs_of_stock = int(state.ch_results[bool_costs_of_stock].sum(axis=1)\
                                                                         .sum(axis=0))
 
-    bool_costs_of_BO = [c for c in state.ch_results.columns
-                        if 'Cost' in c and 'Total' not in c and 'BO' in c]
+    bool_costs_of_BO = [c for c in state.ch_results.columns if 'Cost' in c and\
+                                                                'Total' not in c and\
+                                                                'BO' in c]
     state.sum_costs_of_BO = int(state.ch_results[bool_costs_of_BO].sum(axis=1)\
                                                                   .sum(axis=0))
 
-sm_scenario_manager_md = """
-# Scenario Manager
-
-<|layout|columns=8 4 4 3|columns[mobile]=1|
-<layout_scenario|
-<|layout|columns=1 1 3|columns[mobile]=1|
-<|
-Year
-
-<|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on_change=change_sm_month_selector|>
-|>
-
-<|
-Month
-
-<|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
-|>
-
-<|
-Scenario
-
-<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
-|>
-|>
-|layout_scenario>
-
-<graph|
-**Graph**
-<br/>
-<|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
-|graph>
-
-<toggle_chart|
-<center>
-Pie/Line chart
-<|{ch_show_pie}|toggle|lov={ch_choice_chart}|value_by_id|active={not 'Product ' in sm_graph_selected}|>
-</center>
-|toggle_chart>
-
-<button_configure_scenario|
-<br/>
-<br/>
-<|{sm_show_config_scenario_name}|button|on_action=show_config_scenario_action|active={sm_selected_month == sm_current_month and sm_selected_year == sm_current_year}|>
-|button_configure_scenario>
-|>
-
-<|part|render={sm_show_config_scenario}|
-""" + pa_parameters_md + """
-|>
-
-<|part|render={not(sm_show_config_scenario)}|
-""" + ch_chart_md + """
-|>
-"""
-
-# Button for configuring scenario
-sm_show_config_scenario_name = "Hide configuration"
-sm_show_config_scenario = True
-
-
-def show_config_scenario_action(state):
-    state.sm_show_config_scenario = not state.sm_show_config_scenario
-    state.sm_show_config_scenario_name = "Hide configuration" if state.sm_show_config_scenario else "Configure scenario"
-
-
-sm_current_month = dt.date.today().strftime('%b')
-sm_current_year = dt.date.today().strftime('%Y')
-
-sm_selected_year = sm_current_year
-sm_selected_month = sm_current_month
-
-# Choose the graph to display
-sm_graph_selector = [
-    'Costs',
-    'Purchases',
-    'Productions',
-    'Stocks',
-    'Back Order',
-    'Product RP1',
-    'Product RP2',
-    'Product FPA',
-    'Product FPB']
-sm_graph_selected = sm_graph_selector[0]
 
