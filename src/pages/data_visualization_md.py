@@ -5,11 +5,10 @@ with open('data/fixed_variables_default.json', "r") as f:
     fixed_variables_default = json.load(f)
 
 # no code from Taipy Core has been executed yet, we read the csv file this way
-da_initial_demand = pd.read_csv('data/time_series_demand.csv')
-da_initial_demand = da_initial_demand[['Year', 'Month', 'Demand_A', 'Demand_B']].astype(int)
+da_initial_demand = pd.read_csv('data/time_series_demand.csv')[['Year', 'Month', 'Demand_A', 'Demand_B']]\
+                                                             .astype(int)
 
-da_initial_demand.columns = [col.replace('_', ' ') 
-                            for col in da_initial_demand.columns]
+da_initial_demand.columns = [col.replace('_', ' ') for col in da_initial_demand.columns]
 
 da_initial_variables = pd.DataFrame({key: [fixed_variables_default[key]]
                                     for key in fixed_variables_default.keys() if 'Initial' in key})

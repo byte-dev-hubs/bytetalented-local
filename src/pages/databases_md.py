@@ -1,7 +1,15 @@
+import pathlib
+
 d_chart_csv_path = None
 
+# this path is used to create a temporary file that will allow us to
+# download a table in the Datasouces page
+tempdir = pathlib.Path(".tmp")
+tempdir.mkdir(exist_ok=True)
+PATH_TO_TABLE = str(tempdir / "table.csv")
+
 da_databases_md = """
-<|part|class_name=container|
+<|container|
 # Data**sources**{: .color-primary } 
 
 <|layout|columns=3 2 1|columns[mobile]=1|class_name=align_columns_bottom|
@@ -22,7 +30,7 @@ Month
 <scenario|
 Scenario
 
-<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
+<|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
 |scenario>
 |>
 |layout_scenario>
@@ -33,6 +41,7 @@ Table
 <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
 |>
 
+<br/>
 <|{d_chart_csv_path}|file_download|name=table.csv|label=Download table|>
 |>
 

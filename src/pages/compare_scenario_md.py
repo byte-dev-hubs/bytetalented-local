@@ -16,7 +16,7 @@ Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on
 
 Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
 
-Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|value_by_id|width=18rem|>
+Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
 |>
 |layout_scenario>
 
@@ -30,18 +30,19 @@ Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on
 
 Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
 
-Scenario <|{selected_scenario_two}|selector|lov={scenario_selector_two}|dropdown|value_by_id|>
+Scenario <|{selected_scenario_two}|selector|lov={scenario_selector_two}|dropdown|adapter=adapt_scenarios|>
 |>
 |layout_scenario>
 
-
+<br/>
+<br/>
 <|Compare scenario|button|on_action=compare_scenarios|active={len(scenario_selector)>1}|>
 |>
 
 <|part|render={cs_show_comparaison and len(scenario_selector)>=2}|class_name=mt2 card p2|
 <|layout|columns=1 1 1|columns[mobile]=1|class_name=align_columns_bottom|
 **Representation**
-<|{cs_compar_graph_selected}|selector|lov={cs_compar_graph_selector}|dropdown=|value_by_id|>
+<|{cs_compar_graph_selected}|selector|lov={cs_compar_graph_selector}|dropdown|>
 
 
 **Total cost of scenario 1:** *<|{str(int(sum_costs/1000))+' K'}|>*
@@ -81,8 +82,8 @@ def compare_scenarios(state):
     state.cs_show_comparaison = True
     
     # get of the two scenarios chosen by the user
-    results_1 = tp.get(state.selected_scenario).pipelines['pipeline'].results.read()
-    results_2 = tp.get(state.selected_scenario_two).pipelines['pipeline'].results.read()
+    results_1 = state.selected_scenario.pipelines['pipeline'].results.read()
+    results_2 = state.selected_scenario_two.pipelines['pipeline'].results.read()
     state.cs_sum_costs_two = results_2['Total Cost'].sum()
 
     # calculate the partial costs of the two scenarios

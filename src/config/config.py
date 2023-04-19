@@ -1,16 +1,11 @@
-import taipy as tp
 from taipy import Scope, Config, Frequency
-
 import json
 from algos.algos import *
 
-# This code is the one to produce scenario_cfg and pipeline_csg. These two variables are used to create new scenarios
-# in the main code
-
-# this code is what will configure our graph of execution
+# This code produces scenario_cfg and configures our graph of execution
 
 ###############################################################################
-# Datanode
+# Data nodes
 ###############################################################################
 
 # we create our first datanode, the source is csv file
@@ -21,9 +16,8 @@ demand_cfg = Config.configure_data_node(id="demand",
                                 path=path_to_demand,
                                 has_header=True)
 
-
-fixed_variables_default_json = open('data/fixed_variables_default.json')
-fixed_variables_default = json.load(fixed_variables_default_json)
+with open('data/fixed_variables_default.json') as f:
+    fixed_variables_default = json.load(f)
 
 # creation of our second datanode that will have as a default data our fixed_variables_default
 # this is this datanode that we will write on when we submit other values for fixed_variable
@@ -39,7 +33,7 @@ model_solved_cfg = Config.configure_data_node(id="model_solved", scope=Scope.PIP
 results_cfg = Config.configure_data_node(id="results", scope=Scope.PIPELINE, cacheable=True)
 
 ###############################################################################
-# Task
+# Tasks
 ###############################################################################
 
 # (demand_cfg,fixed_variables_cfg) -> |create_model| -> (model_created_cfg)
@@ -72,4 +66,4 @@ pipeline_cfg = Config.configure_pipeline(id="pipeline",task_configs=[create_mode
 # this is through this variable that we will create new scenarios
 scenario_cfg = Config.configure_scenario(id="scenario",pipeline_configs=[pipeline_cfg], frequency=Frequency.MONTHLY)
 
-Config.export("config.toml")
+Config.export("config/config.toml")

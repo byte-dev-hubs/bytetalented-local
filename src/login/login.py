@@ -18,7 +18,9 @@ new_account = False
 all_scenarios = tp.get_scenarios()
 
 users = {}
-json.dump(users, open('login/login.json', 'w'))
+
+with open('login/login.json', 'w') as f:
+    json.dump(users, f)
 
 dialog_user = True
 user_selector = [('Create new user',Icon('/images/new_account.png','Create new user'))]
@@ -26,6 +28,13 @@ user_in_session = ''
 selected_user = None
 
 salt = os.urandom(32)
+
+def actualize_users_list(state):
+    with open('login/login.json', "r") as f:
+        state.users = json.load(f)
+    state.user_selector = [(user, Icon('images/user.png', user)) for user in state.users.keys()]
+    
+    state.user_selector += [('Create new user', Icon('images/new_account.png', 'Create new user'))]
 
 
 def open_dialog_user(state):
@@ -59,35 +68,30 @@ def test_password(users, login, new_password):
 
 
 
+
 login_md = """
-<|part|id=part_dialog_button|class_name=container text_right pt1
-Welcome, <|{login if login != '' else 'login'}|button|on_action={open_dialog_user}|id=dialog_button|> !
+<|part|id=part_login|
+Welcome, <|{login}|button|on_action=open_dialog_user|id=login_button|> !
 |>
 
-<|{dialog_user}|dialog|title=Set account|id=dialog_user|width=20%|
+<|{dialog_user}|dialog|width=20%|title=Set account|id=dialog_user|on_action=exit_login|
 <|{selected_user}|selector|lov={user_selector}|on_change=on_change_user_selector|id=user_selector|width=100%|value_by_id|>
 |>
 
-<|{dialog_login}|dialog|title=Login|on_action=validate_login|labels=Cancel; Login|id=dialog_user|width=20%|
+<|{dialog_login}|dialog|on_action=validate_login|title=Login|labels=Cancel; Login|id=dialog_user|width=20%|
 
 <|{selected_user}|selector|lov={[(login, Icon('/images/user.png', login))]}|id=user_selected|width=100%|value_by_id|>
 
 Password
 
-<|{password}|input|password=True|>
+<|{password}|input|password|>
 |>
 
 
 
 <|{dialog_new_account}|dialog|title=Register|on_action=validate_login|labels=Cancel; Register|id=dialog_user|width=20%|
-
 Username <|{login}|input|>
 
 Password <|{password}|input|password=True|>
-|>
-
-
-<|part|render={1==0}|
-<|{user_in_session}|>
 |>
 """

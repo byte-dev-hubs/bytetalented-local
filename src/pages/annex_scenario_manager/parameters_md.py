@@ -36,7 +36,7 @@ def create_sliders(fixed_variables):
         slider_md += "\n<|part|render={pa_param_selected == '" + p_type + "'}|"
         if p_type != 'Objective Weights':
             # the part will be shown if 'Objective Weights' is not selected
-            slider_md +="""
+            slider_md += """
 
 <|{pa_product_param}|toggle|lov={pa_choice_product_param}|value_by_id|class_name=mb1 text_center|>
 
@@ -74,10 +74,10 @@ pa_parameters_md = """
 
 """ + pa_sliders_md + """
 
-<|{solver_name}|selector|lov={list_of_solvers}|dropdown|>
+<|{solver_name}|selector|lov={list_of_solvers}|dropdown|width=100%|label=Solver|>
 
 <|Delete|button|on_action={delete_scenario_fct}|active={len(scenario_selector)>0}|id=delete_button|class_name=fullwidth error mb_half|>
-<|Make Primary|button|on_action={make_primary}|active={len(scenario_selector)>0 and not selected_scenario_is_primary}|id=make_primary|class_name=fullwidth secondary mb_half|>
+<|Make Primary|button|on_action={make_primary}|active={len(scenario_selector)>0 and not selected_scenario.is_primary}|id=make_primary|class_name=fullwidth secondary mb_half|>
 <|Re-optimize|button|on_action=submit_scenario|active={len(scenario_selector)>0}|id=re_optimize|class_name=fullwidth secondary mb_half|>
 <|New scenario|button|on_action=create_new_scenario|id=new_scenario|class_name=fullwidth plain mb_half|>
 |>

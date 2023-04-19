@@ -3,13 +3,11 @@ import numpy as np
 from pulp import *
 
 
-# This code is used in the config.py where to create our tasks we need these functions
-# these functions are typical python functions (there is no Taipy in it)
+# This code is used for config.py
 
 ###############################################################################
 # Functions
 ###############################################################################
-
 
 def create_model(demand: pd.DataFrame, fixed_variables: dict):
     """This function creates the model. It will creates all the variables and contraints of the problem.
