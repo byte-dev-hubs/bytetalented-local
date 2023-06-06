@@ -8,8 +8,8 @@ import taipy as tp
 if __name__ == "__main__":
     tp.Core().run()
 
-
-    cc_create_scenarios_for_cycle()
+    if len(tp.get_scenarios())==0:
+        cc_create_scenarios_for_cycle()
 
 # basic packages of python to handle data
 import pandas as pd
