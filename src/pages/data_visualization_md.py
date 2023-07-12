@@ -14,7 +14,7 @@ da_initial_variables = pd.DataFrame({key: [fixed_variables_default[key]]
                                     for key in fixed_variables_default.keys() if 'Initial' in key})
 
 # The code below is to correctly format the name of the columns
-da_initial_variables.columns = [col.replace('_', ' ').replace('one', '1').replace('two', '2').replace('initial ', '')
+da_initial_variables.columns = [col.replace('_', ' ').replace('one', '1').replace('two', '2').replace('initial ', '').replace('Initial ', '')
                                 for col in da_initial_variables.columns]
 da_initial_variables.columns = [col[0].upper() +
                                 col[1:] for col in da_initial_variables.columns]
@@ -26,15 +26,15 @@ da_data_visualisation_md = """
 
 <|Expand here to see more data|expandable|expanded=False|
 
-    <|layout|columns=1 1 1|columns[mobile]=1|
+    <|layout|columns=4 3 2|columns[mobile]=1|
 ### Initial **stock**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Stock' in col]]}|table|show_all|width=100%|>
-        
-### Initial **production**{: .color-secondary } \
-<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Production' in col]]}|table|show_all|width=100%|>
 
 ### Incoming **purchased material**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Purchase' in col]]}|table|show_all|width=100%|>
+
+### Initial **production**{: .color-secondary } \
+<|{da_initial_variables[[col for col in da_initial_variables.columns if 'Production' in col]]}|table|show_all|width=100%|>
     |>
 
 
