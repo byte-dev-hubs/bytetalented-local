@@ -26,7 +26,7 @@ da_data_visualisation_md = """
 
 <|Expand here to see more data|expandable|expanded=False|
 
-    <|layout|columns=4 3 3|columns[mobile]=1|
+    <|layout|columns=5 3 3|columns[mobile]=1|
 ### Initial **stock**{: .color-secondary } \
 <|{da_initial_variables[[col for col in da_initial_variables.columns if 'Stock' in col]]}|table|show_all|width=100%|>
 
