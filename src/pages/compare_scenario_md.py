@@ -82,8 +82,8 @@ def compare_scenarios(state):
     state.cs_show_comparaison = True
     
     # get of the two scenarios chosen by the user
-    results_1 = state.selected_scenario.pipelines['pipeline'].results.read()
-    results_2 = state.selected_scenario_two.pipelines['pipeline'].results.read()
+    results_1 = state.selected_scenario.results.read()
+    results_2 = state.selected_scenario_two.results.read()
     state.cs_sum_costs_two = results_2['Total Cost'].sum()
 
     # calculate the partial costs of the two scenarios

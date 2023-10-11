@@ -1,4 +1,4 @@
-# Backend import of my python code | to create scenario, we need the original pipeline_cfg and scenario_cfg
+# Backend import of my python code | to create scenario, we need the original scenario_cfg
 # fixed_variables_default is used as the default values for the fixed variables
 from config.config import fixed_variables_default
 from pages.compare_cycles_md import *
@@ -124,7 +124,7 @@ def on_change(state, var_name, var_value):
 page = "Data Visualization"
 
 
-def menu_fct(state, var_name: str, fct, var_value):
+def menu_fct(state, var_name: str, var_value):
     """Functions that is called when there is a change in the menu control
 
     Args:

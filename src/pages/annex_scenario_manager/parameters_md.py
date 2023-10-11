@@ -74,7 +74,6 @@ pa_parameters_md = """
 
 """ + pa_sliders_md + """
 
-<|{solver_name}|selector|lov={list_of_solvers}|dropdown|width=100%|label=Solver|>
 
 <|Delete|button|on_action={delete_scenario_fct}|active={len(scenario_selector)>0}|id=delete_button|class_name=fullwidth error mb_half|>
 <|Make Primary|button|on_action={make_primary}|active={len(scenario_selector)>0 and not selected_scenario.is_primary}|id=make_primary|class_name=fullwidth secondary mb_half|>
@@ -85,7 +84,11 @@ pa_parameters_md = """
 """
 
 solver_name = "Default"
-list_of_solvers = solver_list = ["Default"] + pl.listSolvers(onlyAvailable=True)
+try:
+    list_of_solvers = ["Default"] + pl.listSolvers(onlyAvailable=True)
+except:
+    list_of_solvers = ["Default"]
+     
 
 
 pa_param_selector = ['Capacity Constraints','Objective Weights','Initial Parameters']

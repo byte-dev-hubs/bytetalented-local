@@ -180,7 +180,7 @@ def reinitialize_state_after_login(state):
         notify(state, 'info', 'Restoring your session')
 
 
-def validate_login(state, id, action, payload):
+def validate_login(state, action, payload):
     global user_selector, users
 
     # if the button pressed is "Cancel"

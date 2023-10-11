@@ -220,7 +220,7 @@ def update_variables(state):
 
 
     # read the result
-    state.ch_results = state.selected_scenario.pipelines['pipeline'].results.read()
+    state.ch_results = state.selected_scenario.results.read()
     state.pie_results = pd.DataFrame(
         {
             "values": state.ch_results.sum(axis=0),

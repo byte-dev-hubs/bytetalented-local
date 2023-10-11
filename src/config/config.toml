@@ -2,55 +2,39 @@
 
 [DATA_NODE.demand]
 storage_type = "csv"
-scope = "SCENARIO:SCOPE"
 path = "data/time_series_demand.csv"
 has_header = "True:bool"
 
-[DATA_NODE.fixed_variables]
-scope = "PIPELINE:SCOPE"
-
 [DATA_NODE.solver_name]
-scope = "SCENARIO:SCOPE"
 default_data = "Default"
 
 [DATA_NODE.model_created]
-scope = "PIPELINE:SCOPE"
-cacheable = "True:bool"
 
 [DATA_NODE.model_solved]
-scope = "PIPELINE:SCOPE"
-cacheable = "True:bool"
 
 [DATA_NODE.results]
-scope = "PIPELINE:SCOPE"
-cacheable = "True:bool"
-
 
 [TASK.create_model]
-inputs = [ "demand:SECTION", "fixed_variables:SECTION",]
 function = "algos.algos.create_model:function"
+inputs = [ "demand:SECTION", "fixed_variables:SECTION",]
 outputs = [ "model_created:SECTION",]
-skippable = "True:bool"
+skippable = "False:bool"
 
 [TASK.solve_model]
-inputs = [ "model_created:SECTION", "solver_name:SECTION",]
 function = "algos.algos.solve_model:function"
+inputs = [ "model_created:SECTION", "solver_name:SECTION",]
 outputs = [ "model_solved:SECTION",]
-skippable = "True:bool"
-
+skippable = "False:bool"
 
 [TASK.create_results]
-inputs = [ "model_solved:SECTION", "fixed_variables:SECTION", "demand:SECTION",]
 function = "algos.algos.create_results:function"
+inputs = [ "model_solved:SECTION", "fixed_variables:SECTION", "demand:SECTION",]
 outputs = [ "results:SECTION",]
-skippable = "True:bool"
-
-
-[PIPELINE.pipeline]
-tasks = [ "create_model:SECTION", "solve_model:SECTION", "create_results:SECTION",]
+skippable = "False:bool"
 
 [SCENARIO.scenario]
-pipelines = [ "pipeline:SECTION",]
+tasks = [ "create_model:SECTION", "solve_model:SECTION", "create_results:SECTION",]
+additional_data_nodes = []
 frequency = "MONTHLY:FREQUENCY"
 
 [DATA_NODE.fixed_variables.default_data]
@@ -85,3 +69,5 @@ Weight_of_Back_Order = "100:int"
 Max_Capacity_of_FPA_and_FPB = "1710.0:float"
 
 [SCENARIO.scenario.comparators]
+
+[SCENARIO.scenario.sequences]
