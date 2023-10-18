@@ -14,13 +14,15 @@ cc_data = pd.DataFrame(
         'Cost of Stock': [0]
     })
 
+
 cc_show_comparison = False
 cc_layout = {'barmode': 'stack'}
+
 
 def cc_create_scenarios_for_cycle():
     """This function creates scenarios for multiple cycles and submit them.
     """
-    date = dt.datetime(2021, 1, 1)
+    date = dt.datetime.now() - dt.timedelta(days=365)
     month = date.strftime('%b')
     year = date.strftime('%Y')
 
@@ -41,12 +43,12 @@ def cc_create_scenarios_for_cycle():
 
 def update_cc_data(state):
     """This function creates the evolution of the cost of back order and stock for the primary scenario of all the cycles."""
-    all_scenarios = tp.get_primary_scenarios()
 
     dates = []
     cycles = []
     costs_of_back_orders = []
     costs_of_stock = []
+    all_scenarios = tp.get_primary_scenarios()
 
     all_scenarios_ordered = sorted(
         all_scenarios,
@@ -88,8 +90,8 @@ cc_compare_cycles_md = """
 # **Compare**{: .color-primary} cycles
 <|Start cycles comparison|button|on_action=update_cc_data|class_name=mb2|>
 
-<|Table|expanded=False|expandable|
-<|{cc_data}|table|width=100%|>
+<|Table|expandable|expanded=False|
+<|{cc_data}|table|>
 |>
 
 ## Evolution of costs

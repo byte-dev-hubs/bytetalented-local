@@ -6,6 +6,8 @@ cs_compare_scenario_md = """
 <|part|class_name=container|
 # **Compare**{: .color-primary} scenarios
 
+Choose two scenarios to compare.
+
 <|layout|columns=3 3 auto|columns[mobile]=1|gap=1.5rem|class_name=align_columns_bottom|
 
 <layout_scenario|
@@ -16,7 +18,7 @@ Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on
 
 Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
 
-Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
+**Scenario** <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
 |>
 |layout_scenario>
 
@@ -30,7 +32,7 @@ Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|width=100%|on
 
 Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|width=100%|on_change=change_scenario_selector|>
 
-Scenario <|{selected_scenario_two}|selector|lov={scenario_selector_two}|dropdown|adapter=adapt_scenarios|>
+**Scenario** <|{selected_scenario_two}|selector|lov={scenario_selector_two}|dropdown|adapter=adapt_scenarios|>
 |>
 |layout_scenario>
 
@@ -39,7 +41,7 @@ Scenario <|{selected_scenario_two}|selector|lov={scenario_selector_two}|dropdown
 <|Compare scenario|button|on_action=compare_scenarios|active={len(scenario_selector)>1}|>
 |>
 
-<|part|render={cs_show_comparaison and len(scenario_selector)>=2}|class_name=mt2 card p2|
+<|part|render={cs_show_comparison and len(scenario_selector)>=2}|class_name=mt2 card p2|
 <|layout|columns=1 1 1|columns[mobile]=1|class_name=align_columns_bottom|
 **Representation**
 <|{cs_compar_graph_selected}|selector|lov={cs_compar_graph_selector}|dropdown|>
@@ -79,7 +81,7 @@ def compare_scenarios(state):
     Args:
         state (State): All the GUI variables
     """
-    state.cs_show_comparaison = True
+    state.cs_show_comparison = True
     
     # get of the two scenarios chosen by the user
     results_1 = state.selected_scenario.results.read()
@@ -139,7 +141,7 @@ def compare_scenarios(state):
 
 cs_height_bar_chart = "80%"
 
-cs_show_comparaison = False
+cs_show_comparison = False
 
 cs_compar_graph_selector = [
     'Metrics',

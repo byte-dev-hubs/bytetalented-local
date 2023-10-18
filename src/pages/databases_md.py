@@ -28,7 +28,7 @@ Month
 |month>
 
 <scenario|
-Scenario
+**Scenario**
 
 <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
 |scenario>

@@ -1,9 +1,5 @@
-.part_login{
+.help_button{
   position: fixed;
   top: 1rem;
   right: 10rem;
-}
-
-.login_button{
-  border: none;
 }

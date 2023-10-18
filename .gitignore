@@ -7,3 +7,4 @@ Dockerfile
 .DS_Store
 src/.vscode/launch.json
 
+src/.vscode/settings.json

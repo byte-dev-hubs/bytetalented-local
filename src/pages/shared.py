@@ -1,11 +1,50 @@
-from taipy.gui import Icon, notify 
+from taipy.gui import notify, navigate, Icon
 import taipy as tp
-from login.login import *
-import json
 import datetime as dt
 
+# User id
+state_id = None
+
+# Metrics for scenario manager and comparison
+sum_costs = 0
+sum_costs_of_stock = 0
+sum_costs_of_BO = 0
+sum_costs_of_BO = 0
+
+# Navigation
+page = "Data Visualization"
+
+menu_lov = [("Data-Visualization", Icon('images/icons/visualize.svg', 'Data Visualization')),
+            ("Scenario-Manager", Icon('images/icons/scenario.svg', 'Scenario Manager')),
+            ("Compare-Scenarios", Icon('images/icons/compare.svg', 'Compare Scenarios')),
+            ("Compare-Cycles", Icon('images/icons/cycle.svg', 'Compare Cycles')),
+            ('Databases', Icon('images/icons/data_base.svg', 'Databases'))]
+
+
+def menu_fct(state, var_name: str, var_value):
+    """Functions that is called when there is a change in the menu control
+
+    Args:
+        state (_type_): the state object of Taipy
+        var_name (str): the changed variable name
+        var_value (_type_): the changed variable value
+    """
+
+    # change the value of the state.page variable in order to render the
+    # correct page
+    state.page = var_value['args'][0]
+    navigate(state, to=state.page)
+
+
+    # security on the 'All' option of sm_graph_selected that can be selected
+    # only on the 'Databases' page
+    if state.page != 'Databases' and state.sm_graph_selected == 'All':
+        state.sm_graph_selected = 'Costs'
+
+
+# Functions for scenarios
 def adapt_scenarios(scenario):
-    return 'Primary '+scenario.name if scenario.is_primary else scenario.name
+    return 'Primary ' + scenario.name if scenario.is_primary else scenario.name
 
 
 def create_sm_tree_dict(scenarios, sm_tree_dict: dict = None):
@@ -68,7 +107,8 @@ def create_time_selectors():
 
 
 def change_sm_month_selector(state):
-    """This function is called when the user changes the year selector. It updates the selector shown on the GUI
+    """
+    This function is called when the user changes the year selector. It updates the selector shown on the GUI
     for the month selector and is calling the same function for the scenario selector.
     
 
@@ -84,9 +124,9 @@ def change_sm_month_selector(state):
 
 
 def change_scenario_selector(state):
-    """This function is called when the user changes the month selector. It updates the selector shown on the GUI
+    """
+    This function is called when the user changes the month selector. It updates the selector shown on the GUI
     for the scenario selector.
-    
 
     Args:
         state (State): all the GUI variables
@@ -102,6 +142,8 @@ def change_scenario_selector(state):
 
         state.sm_show_config_scenario = False
         notify(state, "info", "This scenario is historical, you can't modify it")
+    else:
+        state.sm_show_config_scenario = True
 
 def update_scenario_selector(state):
     """
@@ -112,14 +154,18 @@ def update_scenario_selector(state):
     Args:
         scenarios (list): a list of tuples (scenario,properties)
     """
-
     state.scenario_selector = [s for s in tp.get_scenarios() if 'user' in s.properties and\
-                                                                 state.login == s.properties['user']]
+                                                                 state.state_id == s.properties['user']]
     state.scenario_selector_two = state.scenario_selector.copy()
     sm_tree_dict[state.sm_selected_year][state.sm_selected_month] = state.scenario_selector
 
+scenario_selector = []
+selected_scenario = None
 
+scenario_selector_two = []
+selected_scenario_two = None
 
+# Initialization of scenario tree
 sm_tree_dict = {}
 
 sm_current_month = dt.date.today().strftime('%b')
@@ -130,98 +176,15 @@ sm_selected_month = sm_current_month
 
 sm_tree_dict, sm_year_selector, sm_month_selector = create_time_selectors()
 
-###############################################################################
-# Login
-###############################################################################
-def exit_login(state):
-    global user_selector
-    if state.selected_user in [user[0] for user in user_selector]:
-        state.login = state.selected_user
 
-        if state.selected_user in state.user_in_session:
-            state.dialog_user = False
+# Help
+dialog_help = False
 
-            reinitialize_state_after_login(state)
-    else:
-        notify(state, "Warning", "You must login first!")
-
-def on_change_user_selector(state):
-    global user_selector
-    if state.selected_user == 'Create new user':
-        state.login = ''
-        state.dialog_new_account = True
-    elif state.selected_user in [user[0] for user in user_selector]:
-        state.login = state.selected_user
-
-        if state.selected_user in state.user_in_session:
-            state.dialog_user = False
-
-            reinitialize_state_after_login(state)
-        else:
-            state.dialog_login = True
-
-    else:
-        notify(state, "Warning", "Unexpected error")
-
-
-def reinitialize_state_after_login(state):
-    state.cs_show_comparaison = False
-    state.password = ''
+def restore_state(state):
+    state.cs_show_comparison = False
     update_scenario_selector(state)
-
-    if state.dialog_new_account:
-        state.selected_scenario = ""
-        notify(state, 'info', 'Creating a new session')
-        state.dialog_new_account = False
-    else:
-        if len(state.scenario_selector) != 0:
-            state.selected_scenario = state.scenario_selector[0]
-
-        notify(state, 'info', 'Restoring your session')
+    notify(state, 'info', 'Restoring your session')
 
 
-def validate_login(state, action, payload):
-    global user_selector, users
-
-    # if the button pressed is "Cancel"
-    if payload['args'][0] != 1:
-        state.dialog_login = False
-        state.dialog_new_account = False
-    else:
-        if state.dialog_new_account:
-            if state.login in [user[0] for user in user_selector]:
-                notify(state, 'error', 'This user already exists')
-            elif state.login == '':
-                notify(state, "Warning", "Please enter a valid login")
-            elif state.login != '' and len(state.password) > 0:
-                state.dialog_login = False
-                state.dialog_new_account = False
-                state.dialog_user = False
-
-                users[state.login] = {}
-                users[state.login]["password"] = encode(state.password)
-                users[state.login]["last_visit"] = str(dt.datetime.now())
-
-                with open('login/login.json', 'w') as f:
-                    json.dump(users, f)
-                reinitialize_state_after_login(state)
-
-                state.user_selector = [(state.login ,Icon('images/user.png', state.login))] + state.user_selector
-                user_selector = state.user_selector
-                state.selected_user = state.login
-
-                state.user_in_session += state.selected_user
-        elif state.login in [user[0] for user in user_selector]:
-            if test_password(users, state.login, state.password):
-                state.dialog_login = False
-                state.dialog_new_account = False
-                state.dialog_user = False
-                state.user_in_session += state.selected_user
-
-                reinitialize_state_after_login(state)
-            else:
-                notify(state, "Warning", "Wrong password")
-
-        else:
-            notify(state, "Warning", "Unexpected error")
-
+def validate_help(state, action, payload):
+    state.dialog_help = False

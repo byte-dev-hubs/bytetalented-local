@@ -1,56 +1,88 @@
-from pages.annex_scenario_manager.chart_md import ch_chart_md, ch_choice_chart, ch_show_pie, ch_results
-from pages.annex_scenario_manager.parameters_md import pa_parameters_md, pa_param_selector, pa_param_selected, pa_choice_product_param, pa_product_param, solver_name, list_of_solvers
+from pages.shared import update_scenario_selector
 
-
-from pages.shared import  update_scenario_selector
-
-from taipy.gui import notify, invoke_long_callback
+from taipy.gui import notify, invoke_long_callback, Markdown
 import taipy as tp
 from config.config import scenario_cfg
 import datetime as dt
 import pandas as pd
 
-sm_scenario_manager_md = """
-<|container|
-# **Scenario**{: .color-primary } Manager
+from config.config import fixed_variables_default
+from taipy.gui import Icon
+import pandas as pd
 
-<|layout|columns=8 4 auto auto|columns[mobile]=1|class_name=align_columns_bottom|
-    <layout_scenario|
-        <|layout|columns=1 1 3|columns[mobile]=1|class_name=align_columns_bottom|
-Year <|{sm_selected_year}|selector|lov={sm_year_selector}|dropdown|on_change=change_sm_month_selector|>
+# Toggle for setting charts
+sm_choice_chart = [("pie", Icon("images/icons/pie_chart.svg", "pie")),
+                    ("chart", Icon("images/icons/bar_chart.svg", "chart"))]
+sm_show_pie = sm_choice_chart[1][0]
 
-Month <|{sm_selected_month}|selector|lov={sm_month_selector}|dropdown|on_change=change_scenario_selector|>
+sm_results = pd.DataFrame({"Monthly Production FPA":[],
+                          "Monthly Stock FPA": [],
+                          "Monthly BO FPA": [],
+                          "Max Capacity FPA": [],
+                          
+                          "Monthly Production FPB": [],
+                          "Monthly Stock FPB": [],
+                          "Monthly BO FPB": [],
+                          "Max Capacity FPB": [],
+                          
+                          "Monthly Stock RP1":[],
+                          "Monthly Stock RP2":[],
+                          
+                          "Monthly Purchase RP1":[],
+                          "Monthly Purchase RP2":[],
+                          
+                          "Demand FPA": [],
+                          "Demand FPB": [],
+                          
+                          'Stock FPA Cost': [],
+                          'Stock FPB Cost': [],
+                          
+                          'Stock RP1 Cost': [],
+                          'Stock RP2 Cost': [],
+                          
+                          'Purchase RP1 Cost': [],
+                          'Purchase RP2 Cost': [],
+                          
+                          "BO FPA Cost":[],
+                          "BO FPB Cost":[],
+                          
+                          "Total Cost": [],
+                          "index": []})
 
-Scenario <|{selected_scenario}|selector|lov={scenario_selector}|dropdown|adapter=adapt_scenarios|width=18rem|>
-        |>
-    |layout_scenario>
+
+pie_results = pd.DataFrame(
+        {
+            "values": [1] * len(list(sm_results.columns)),
+            "labels": list(sm_results.columns)
+        }, index=list(sm_results.columns)
+        )
 
 
-Graph <|{sm_graph_selected}|selector|lov={sm_graph_selector}|dropdown|>
+chart = sm_results[['index',
+                    'Purchase RP1 Cost',
+                    'Stock RP1 Cost',
+                    'Stock RP2 Cost',
+                    'Purchase RP2 Cost',
+                    'Stock FPA Cost',
+                    'Stock FPB Cost',
+                    'BO FPA Cost',
+                    'BO FPB Cost',
+                    'Total Cost']]
 
-<toggle_chart|
-Pie/Line chart
+sm_param_selector = ['Capacity Constraints','Objective Weights','Initial Parameters']
+sm_param_selected = sm_param_selector[0]
 
-<|{ch_show_pie}|toggle|lov={ch_choice_chart}|value_by_id|active={not 'Product ' in sm_graph_selected}|>
-|toggle_chart>
 
-<br/>
-<|{'Hide Configuration' if sm_show_config_scenario else 'Show Configuration'}|button|on_action={lambda s: s.assign('sm_show_config_scenario', not s.sm_show_config_scenario)}|active={sm_selected_month == sm_current_month and sm_selected_year == sm_current_year}|>
-|>
+# Toggle for choosing the sliders
+sm_choice_product_param = [("product_RPone", Icon("images/P1.png", "product_RPone")),
+                    ("product_RPtwo", Icon("images/P2.png", "product_RPtwo")),
+                    ("product_FPA", Icon("images/PA.png", "product_FPA")),
+                    ("product_FPB", Icon("images/PB.png", "product_FPB"))]
+sm_product_param = 'Else'
 
-<|part|render={sm_show_config_scenario}|class_name=mt2|
-""" + pa_parameters_md + """
-|>
-
-<|part|render={not(sm_show_config_scenario)}|class_name=mt2|
-""" + ch_chart_md + """
-|>
-|>
-"""
 
 # Button for configuring scenario
 sm_show_config_scenario = True
-
 
 # Choose the graph to display
 sm_graph_selector = [
@@ -66,6 +98,7 @@ sm_graph_selector = [
 sm_graph_selected = sm_graph_selector[0]
 
 
+fixed_variables = fixed_variables_default
 
 
 def make_primary(state):
@@ -98,18 +131,14 @@ def create_new_scenario(state):
         state (_type_): the state object of Taipy
     """
 
-    print("Creating scenario...")
     name = f"{dt.datetime.now().strftime('%d-%b-%Y')} Nb : {len(state.scenario_selector)}"
     scenario = tp.create_scenario(scenario_cfg, name=name)
-    scenario.properties['user'] = state.login
+    scenario.properties['user'] = state.state_id
 
     # update the scenario selector
-    print("Updating scenario selector...")
     update_scenario_selector(state)
     state.selected_scenario = scenario
 
-    # submit this scenario
-    print("Submitting it...")
     submit_scenario(state)
 
 
@@ -175,8 +204,6 @@ def submit_heavy(scenario):
     tp.submit(scenario)
 
 def submit_status(state, status):
-    # update all the variables that we want to update (ch_results, pie_results
-    # and metrics)
     update_variables(state)
 
 
@@ -197,14 +224,11 @@ def submit_scenario(state):
     # scenario
     catch_error_in_submit(state)
 
-    # getting the scenario
-
     # setting the scenario with the right parameters
     old_fixed_variables = state.selected_scenario.fixed_variables.read()
     if old_fixed_variables != state.fixed_variables._dict:
         state.selected_scenario.fixed_variables.write(state.fixed_variables._dict)
-    if state.solver_name != state.selected_scenario.solver_name.read():
-        state.selected_scenario.solver_name.write(state.solver_name)
+        
     # running the scenario in a long callback and update variables
     invoke_long_callback(state, submit_heavy, [state.selected_scenario], submit_status)
 
@@ -220,25 +244,26 @@ def update_variables(state):
 
 
     # read the result
-    state.ch_results = state.selected_scenario.results.read()
+    state.sm_results = state.selected_scenario.results.read()
     state.pie_results = pd.DataFrame(
         {
-            "values": state.ch_results.sum(axis=0),
-            "labels": list(state.ch_results.columns)
+            "values": state.sm_results.sum(axis=0),
+            "labels": list(state.sm_results.columns)
         })
 
-    state.sum_costs = state.ch_results['Total Cost'].sum()
+    state.sum_costs = state.sm_results['Total Cost'].sum()
 
-    bool_costs_of_stock = [c for c in state.ch_results.columns if 'Cost' in c and\
+    bool_costs_of_stock = [c for c in state.sm_results.columns if 'Cost' in c and\
                                                                   'Total' not in c and\
                                                                   'Stock' in c]
-    state.sum_costs_of_stock = int(state.ch_results[bool_costs_of_stock].sum(axis=1)\
+    state.sum_costs_of_stock = int(state.sm_results[bool_costs_of_stock].sum(axis=1)\
                                                                         .sum(axis=0))
 
-    bool_costs_of_BO = [c for c in state.ch_results.columns if 'Cost' in c and\
+    bool_costs_of_BO = [c for c in state.sm_results.columns if 'Cost' in c and\
                                                                 'Total' not in c and\
                                                                 'BO' in c]
-    state.sum_costs_of_BO = int(state.ch_results[bool_costs_of_BO].sum(axis=1)\
+    state.sum_costs_of_BO = int(state.sm_results[bool_costs_of_BO].sum(axis=1)\
                                                                   .sum(axis=0))
 
 
+sm_scenario_manager_md = Markdown('pages/scenario_manager/scenario_manager.md')
