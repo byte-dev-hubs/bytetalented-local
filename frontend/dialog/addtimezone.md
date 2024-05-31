@@ -1,0 +1,1 @@
+<|{selected_city}|selector|lov={cities}|dropdown|class_name=fullwidth|>

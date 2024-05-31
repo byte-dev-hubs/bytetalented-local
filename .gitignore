@@ -1,10 +1,5 @@
-src/.data
-*.pyc
-src/login/login.json
-*.csv
-*.zip
-Dockerfile
-.DS_Store
-src/.vscode/launch.json
-
-src/.vscode/settings.json
+.vscode
+/backend/__pycache__
+/frontend/__pycache__
+/model/__pycache__
+/uploads
